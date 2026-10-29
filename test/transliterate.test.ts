@@ -1,6 +1,7 @@
 import type { Cluster } from "havarotjs/cluster";
 import type { Syllable } from "havarotjs/syllable";
-import { describe, expect, test } from "vitest";
+import { Word } from "havarotjs/word";
+import { describe, expect, test, vi } from "vitest";
 import type { Schema } from "../src/index";
 import { SBL, transliterate } from "../src/index";
 import { brillAcademic, michiganClaremont, sblAcademicSpirantization, sblSimple } from "../src/schemas/index";
@@ -908,5 +909,25 @@ describe("ticket 023: cached feature and vowel RegExps stay up to date", () => {
     expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: stress })).toBe("me'lek");
     expect(transliterate("מֶ֣לֶךְ", { SEGOL: "E", STRESS_MARKER: stress })).toBe("mE'lEk");
     expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: stress })).toBe("me'lek");
+  });
+});
+
+// tickets/024-prevword-syllables-computed-twice.md
+describe("ticket 024: the previous word is syllabified once per dagesh check", () => {
+  test("construct doubling still depends on the previous word's last syllable", () => {
+    expect(transliterate("מַה־זֹּאת", { ADDITIONAL_FEATURES: [] })).toBe("mah-zzōʾt");
+    expect(transliterate("אֶת־זֹּאת", { ADDITIONAL_FEATURES: [] })).toBe("ʾet-zōʾt");
+  });
+
+  test("the construct word's syllables are read twice: once to transliterate it, once for the next word's dagesh", () => {
+    // havarotjs syllabifies the word again on every read of `syllables`
+    const spy = vi.spyOn(Word.prototype, "syllables", "get");
+    try {
+      transliterate("מַה־זֹּאת", { ADDITIONAL_FEATURES: [] });
+      const reads = spy.mock.contexts.filter((word) => word.text === "מַה־").length;
+      expect(reads).toBe(2);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

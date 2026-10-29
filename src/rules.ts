@@ -328,7 +328,8 @@ const isDageshChazaq = (cluster: Cluster, schema: Schema) => {
   }
 
   const prevWord = cluster.syllable?.word?.prev?.value;
-  if (prevWord?.isInConstruct && !prevWord.syllables[prevWord.syllables.length - 1].isClosed) {
+  // havarotjs syllabifies the word again on every read of `syllables`, so read it once
+  if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
     return true;
   }
 
