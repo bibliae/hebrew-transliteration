@@ -3,7 +3,7 @@ import type { Syllable } from "havarotjs/syllable";
 import { Word } from "havarotjs/word";
 import { describe, expect, test, vi } from "vitest";
 import type { Schema } from "../src/index";
-import { SBL, transliterate } from "../src/index";
+import { SBL, Schema as SchemaClass, transliterate } from "../src/index";
 import { brillAcademic, michiganClaremont, sblAcademicSpirantization, sblSimple } from "../src/schemas/index";
 
 interface Inputs {
@@ -929,5 +929,33 @@ describe("ticket 024: the previous word is syllabified once per dagesh check", (
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+// tickets/025-sbl-constructor-duplicate-assignments.md
+describe("ticket 025: the SBL constructor sets each field once", () => {
+  test("sets every field a Schema has", () => {
+    expect(Object.keys(new SBL()).sort()).toEqual(Object.keys(new SchemaClass(new SBL())).sort());
+  });
+
+  test("uses SBL's defaults", () => {
+    const sbl = new SBL();
+    expect(sbl.VOCAL_SHEVA).toBe("ə");
+    expect(sbl.holemHaser).toBe("remove");
+    expect(sbl.ketivQeres).toBeUndefined();
+    expect(sbl.ON_COMPLETE).toBeUndefined();
+    expect(sbl.ADDITIONAL_FEATURES?.map((feature) => feature.TITLE)).toEqual([
+      "Defective Long Vowels",
+      "Euphonic Dagesh"
+    ]);
+  });
+
+  test("keeps the values it is given", () => {
+    const onComplete = (result: string) => result.toUpperCase();
+    const sbl = new SBL({ VOCAL_SHEVA: "e", holemHaser: "preserve", ADDITIONAL_FEATURES: [], ON_COMPLETE: onComplete });
+    expect(sbl.VOCAL_SHEVA).toBe("e");
+    expect(sbl.holemHaser).toBe("preserve");
+    expect(sbl.ADDITIONAL_FEATURES).toEqual([]);
+    expect(sbl.ON_COMPLETE).toBe(onComplete);
   });
 });

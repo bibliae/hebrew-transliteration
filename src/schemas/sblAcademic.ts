@@ -363,7 +363,7 @@ export class SBL extends Schema {
       DIVINE_NAME: schema.DIVINE_NAME ?? "yhwh",
       DIVINE_NAME_ELOHIM: schema.DIVINE_NAME_ELOHIM ?? undefined,
       SYLLABLE_SEPARATOR: schema.SYLLABLE_SEPARATOR ?? undefined,
-      ADDITIONAL_FEATURES: schema.ADDITIONAL_FEATURES ?? undefined,
+      ADDITIONAL_FEATURES: schema.ADDITIONAL_FEATURES ?? [defectiveLongVowels, euphonicDagesh],
       STRESS_MARKER: schema.STRESS_MARKER ?? undefined,
       ON_COMPLETE: schema.ON_COMPLETE ?? undefined,
       longVowels: schema.longVowels ?? true,
@@ -375,88 +375,8 @@ export class SBL extends Schema {
       article: schema.article ?? true,
       allowNoNiqqud: schema.allowNoNiqqud ?? true,
       strict: schema.strict ?? false,
-      holemHaser: schema.holemHaser || "remove",
-      ketivQeres: schema.ketivQeres || undefined
+      holemHaser: schema.holemHaser ?? "remove",
+      ketivQeres: schema.ketivQeres ?? undefined
     });
-
-    this.VOCAL_SHEVA = schema.VOCAL_SHEVA ?? "ə";
-    this.HATAF_SEGOL = schema.HATAF_SEGOL ?? "ĕ";
-    this.HATAF_PATAH = schema.HATAF_PATAH ?? "ă";
-    this.HATAF_QAMATS = schema.HATAF_QAMATS ?? "ŏ";
-    this.HIRIQ = schema.HIRIQ ?? "i";
-    this.TSERE = schema.TSERE ?? "ē";
-    this.SEGOL = schema.SEGOL ?? "e";
-    this.PATAH = schema.PATAH ?? "a";
-    this.QAMATS = schema.QAMATS ?? "ā";
-    this.HOLAM = schema.HOLAM ?? "ō";
-    this.HOLAM_HASER = schema.HOLAM_HASER ?? "ō";
-    this.QUBUTS = schema.QUBUTS ?? "u";
-    this.DAGESH = schema.DAGESH ?? "";
-    this.DAGESH_CHAZAQ = schema.DAGESH_CHAZAQ ?? true;
-    this.MAQAF = schema.MAQAF ?? "-";
-    this.PASEQ = schema.PASEQ ?? "";
-    this.SOF_PASUQ = schema.SOF_PASUQ ?? "";
-    this.QAMATS_QATAN = schema.QAMATS_QATAN ?? "o";
-    this.FURTIVE_PATAH = schema.FURTIVE_PATAH ?? "a";
-    this.HIRIQ_YOD = schema.HIRIQ_YOD ?? "î";
-    this.TSERE_YOD = schema.TSERE_YOD ?? "ê";
-    this.SEGOL_YOD = schema.SEGOL_YOD ?? "ê";
-    this.SHUREQ = schema.SHUREQ ?? "û";
-    this.HOLAM_VAV = schema.HOLAM_VAV ?? "ô";
-    this.QAMATS_HE = schema.QAMATS_HE ?? "â";
-    this.PATAH_HE = schema.PATAH_HE ?? undefined;
-    this.SEGOL_HE = schema.SEGOL_HE ?? undefined;
-    this.TSERE_HE = schema.TSERE_HE ?? undefined;
-    this.MS_SUFX = schema.MS_SUFX ?? "āyw";
-    this.ALEF = schema.ALEF ?? "ʾ";
-    this.BET = schema.BET ?? "b";
-    this.BET_DAGESH = schema.BET_DAGESH ?? undefined;
-    this.GIMEL = schema.GIMEL ?? "g";
-    this.GIMEL_DAGESH = schema.GIMEL_DAGESH ?? undefined;
-    this.DALET = schema.DALET ?? "d";
-    this.DALET_DAGESH = schema.DALET_DAGESH ?? undefined;
-    this.HE = schema.HE ?? "h";
-    this.VAV = schema.VAV ?? "w";
-    this.ZAYIN = schema.ZAYIN ?? "z";
-    this.HET = schema.HET ?? "ḥ";
-    this.TET = schema.TET ?? "ṭ";
-    this.YOD = schema.YOD ?? "y";
-    this.FINAL_KAF = schema.FINAL_KAF ?? "k";
-    this.KAF = schema.KAF ?? "k";
-    this.KAF_DAGESH = schema.KAF_DAGESH ?? undefined;
-    this.LAMED = schema.LAMED ?? "l";
-    this.FINAL_MEM = schema.FINAL_MEM ?? "m";
-    this.MEM = schema.MEM ?? "m";
-    this.FINAL_NUN = schema.FINAL_NUN ?? "n";
-    this.NUN = schema.NUN ?? "n";
-    this.SAMEKH = schema.SAMEKH ?? "s";
-    this.AYIN = schema.AYIN ?? "ʿ";
-    this.FINAL_PE = schema.FINAL_PE ?? "p";
-    this.PE = schema.PE ?? "p";
-    this.PE_DAGESH = schema.PE_DAGESH ?? undefined;
-    this.FINAL_TSADI = schema.FINAL_TSADI ?? "ṣ";
-    this.TSADI = schema.TSADI ?? "ṣ";
-    this.QOF = schema.QOF ?? "q";
-    this.RESH = schema.RESH ?? "r";
-    this.SHIN = schema.SHIN ?? "š";
-    this.SIN = schema.SIN ?? "ś";
-    this.TAV = schema.TAV ?? "t";
-    this.TAV_DAGESH = schema.TAV_DAGESH ?? undefined;
-    this.DIVINE_NAME = schema.DIVINE_NAME ?? "yhwh";
-    this.DIVINE_NAME_ELOHIM = schema.DIVINE_NAME_ELOHIM ?? undefined;
-    this.SYLLABLE_SEPARATOR = schema.SYLLABLE_SEPARATOR ?? undefined;
-    this.ADDITIONAL_FEATURES = schema.ADDITIONAL_FEATURES ?? [defectiveLongVowels, euphonicDagesh];
-    this.STRESS_MARKER = schema.STRESS_MARKER ?? undefined;
-    this.longVowels = schema.longVowels ?? true;
-    this.qametsQatan = schema.qametsQatan ?? true;
-    this.shevaAfterMeteg = schema.shevaAfterMeteg ?? true;
-    this.shevaWithMeteg = schema.shevaWithMeteg ?? false;
-    this.sqnmlvy = schema.sqnmlvy ?? true;
-    this.wawShureq = schema.wawShureq ?? true;
-    this.article = schema.article ?? true;
-    this.allowNoNiqqud = schema.allowNoNiqqud ?? true;
-    this.strict = schema.strict ?? false;
-    this.holemHaser = schema.holemHaser ?? "remove";
-    this.ketivQeres = schema.ketivQeres ?? undefined;
   }
 }
