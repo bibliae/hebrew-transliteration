@@ -706,10 +706,9 @@ export const tiberian: Schema = {
         // matches the name Issachar
         const taamim = /[\u{0590}-\u{05AF}\u{05BD}\u{05BF}]/gu;
         const text = word.text.replace(taamim, "");
-        const match = text.match(heb);
-        const vav = match?.[1] ?? "";
         const issachar = "jissɔːˈχɔːɔʀ̟";
-        return `${vav}${issachar}`;
+        // only replace the name itself, so a prefix (e.g. לְ) is kept
+        return text.replace(heb, (_match, vav = "") => `${vav}${issachar}`);
       }
     },
     {

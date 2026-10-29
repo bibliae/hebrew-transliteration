@@ -625,3 +625,18 @@ describe("ticket 012: stress marker splits a doubled tet digraph correctly", () 
     expect(transliterate(hebrew, schema)).toBe(transliteration);
   });
 });
+
+// tickets/020-tiberian-issachar-drops-prefix.md
+describe("ticket 020: Issachar keeps its prefixes", () => {
+  // the vocal sheva of a prefix comes out as [a], as in the existing "with vav" test (vajissɔːˈχɔːɔʀ̟)
+  test.each`
+    description                | hebrew              | transliteration
+    ${"with lamed"}            | ${"לְיִשָּׂשכָר"}   | ${"lajissɔːˈχɔːɔʀ̟"}
+    ${"with bet"}              | ${"בְּיִשָּׂשכָר"}  | ${"bajissɔːˈχɔːɔʀ̟"}
+    ${"with shureq and lamed"} | ${"וּלְיִשָּׂשכָר"} | ${"wulajissɔːˈχɔːɔʀ̟"}
+    ${"with vav (unchanged)"}  | ${"וְיִשָּׂשכָר"}   | ${"vajissɔːˈχɔːɔʀ̟"}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, schema)).toBe(transliteration);
+  });
+});
