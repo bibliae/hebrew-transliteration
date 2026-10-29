@@ -1,4 +1,57 @@
-import type { Schema } from "../schema.js";
+import type { ClusterFeature, Schema } from "../schema.js";
+
+/**
+ * Builds the rule for a consonant with a dagesh whose schema value is a digraph (e.g. "tʰ" or "tˁ")
+ *
+ * When the consonant is doubled, only the first character of the digraph is repeated ("ttʰ", not "tʰtʰ"),
+ * so the rule writes the doubled form itself instead of leaving it to rules.ts
+ *
+ * @param title the feature's title
+ * @param hebrew the consonant with a dagesh
+ * @param consonant the consonant without the dagesh, to find it at the end of the previous syllable
+ * @param key the schema key of the digraph
+ * @param secondChar the second character of the digraph, which is not repeated
+ */
+const digraphWithDagesh = (
+  title: string,
+  hebrew: RegExp,
+  consonant: RegExp,
+  key: "TAV_DAGESH" | "PE_DAGESH" | "KAF_DAGESH" | "TET" | "TSADI",
+  secondChar: string
+): ClusterFeature => ({
+  TITLE: title,
+  DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
+  FEATURE: "cluster",
+  HEBREW: hebrew,
+  TRANSLITERATION: (cluster, heb, schema) => {
+    const digraph = schema[key];
+    if (!digraph) {
+      return cluster.text;
+    }
+    const doubled = digraph.replace(secondChar, "") + digraph;
+
+    // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+    // is in construct and does not end in a closed syllable;
+    // otherwise, the character with the dagesh will not be doubled
+    // oxlint-disable-next-line typescript/prefer-optional-chain
+    if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+      const prevWord = cluster.syllable?.word?.prev?.value;
+      if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+        return cluster.text.replace(heb, () => doubled);
+      }
+      return cluster.text;
+    }
+
+    // in the middle of the word, the dagesh is a dagesh chazaq only if the previous syllable
+    // ends with the same consonant; otherwise it is a dagesh qal (i.e. lene) and not doubled
+    const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination ?? "";
+    if (!consonant.test(prevCoda)) {
+      return cluster.text;
+    }
+
+    return cluster.text.replace(heb, () => doubled);
+  }
+});
 
 export const tiberian: Schema = {
   VOCAL_SHEVA: "a",
@@ -76,183 +129,11 @@ export const tiberian: Schema = {
         return cluster.text.replace(hebrew, "ɟɟ");
       }
     },
-    {
-      TITLE: "Tav with Dagesh",
-      DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
-      FEATURE: "cluster",
-      HEBREW: /תּ/u,
-      TRANSLITERATION: (cluster, heb, schema) => {
-        // rule for a form where the output is a digraph
-        // where the second character is not a combining character
-
-        const digraph = schema["TAV_DAGESH"];
-        // remove the second character of the digraph
-        const secondChar = "ʰ";
-        const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
-
-        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
-        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
-        // Otherwise, the character with the dagesh will not be doubled
-        // oxlint-disable-next-line typescript/prefer-optional-chain
-        if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
-          const prevWord = cluster.syllable?.word?.prev?.value;
-          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-          }
-          return cluster.text;
-        }
-
-        // if there is a dagesh, it may be that it is a dagesh qal (i.e. lene)
-        // if it is a dagesh lene, then like the beginning of the word,
-        // the character w/ the dagesh will not be doubled
-        const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination;
-        const dagesh = "\u{05BC}";
-        const noDageshHebrew = typeof heb === "string" ? heb.replace(dagesh, "") : heb.source.replace(dagesh, "");
-        if (!prevCoda?.includes(noDageshHebrew)) {
-          return cluster.text;
-        }
-
-        // because the initial value is a digraph, we need to replace the first character
-        // or it will be doubled in rules.ts as "tʰtʰ"
-        return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-      }
-    },
-    {
-      TITLE: "Pe with Dagesh",
-      DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
-      FEATURE: "cluster",
-      HEBREW: /פּ/u,
-      TRANSLITERATION: (cluster, heb, schema) => {
-        //  /ת(?!\u{05b0})/u rule for explanation
-
-        const digraph = schema["PE_DAGESH"];
-        const secondChar = "ʰ";
-        const noAspiration = digraph?.replace(secondChar, "") ?? "";
-
-        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
-        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
-        // Otherwise, the character with the dagesh will not be doubled
-        // oxlint-disable-next-line typescript/prefer-optional-chain
-        if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
-          const prevWord = cluster.syllable?.word?.prev?.value;
-          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-            return cluster.text.replace(heb, `${noAspiration + digraph}`);
-          }
-          return cluster.text;
-        }
-
-        const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination;
-        const dagesh = "\u{05BC}";
-        const noDageshHebrew = typeof heb === "string" ? heb.replace(dagesh, "") : heb.source.replace(dagesh, "");
-        if (!prevCoda?.includes(noDageshHebrew)) {
-          return cluster.text;
-        }
-
-        return cluster.text.replace(heb, `${noAspiration + digraph}`);
-      }
-    },
-    {
-      TITLE: "Kaf with Dagesh",
-      DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
-      FEATURE: "cluster",
-      HEBREW: /כּ|ךּ/u,
-      TRANSLITERATION: (cluster, heb, schema) => {
-        // /תּ[\u{05B4}-\u{05BB}]/u rule for explanation
-        const digraph = schema["KAF_DAGESH"];
-        const secondChar = "ʰ";
-        const noAspiration = digraph?.replace(secondChar, "") ?? "";
-
-        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
-        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
-        // Otherwise, the character with the dagesh will not be doubled
-        // oxlint-disable-next-line typescript/prefer-optional-chain
-        if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
-          const prevWord = cluster.syllable?.word?.prev?.value;
-          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-            return cluster.text.replace(heb, `${noAspiration + digraph}`);
-          }
-          return cluster.text;
-        }
-
-        const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination;
-        const dagesh = "\u{05BC}";
-        const noDageshHebrew = typeof heb === "string" ? heb.replaceAll(dagesh, "") : heb.source.replaceAll(dagesh, "");
-        // the value of noDageshHebrew will be כ|ך, so we can conver back to a regex
-        if (!new RegExp(noDageshHebrew, "u").test(prevCoda || "")) {
-          return cluster.text;
-        }
-
-        return cluster.text.replace(heb, `${noAspiration + digraph}`);
-      }
-    },
-    {
-      TITLE: "Tet with Dagesh",
-      DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
-      FEATURE: "cluster",
-      HEBREW: /טּ/u,
-      TRANSLITERATION: (cluster, heb, schema) => {
-        //  /ת(?!\u{05b0})/u rule for explanation
-
-        const digraph = schema["TET"];
-        const secondChar = "ˁ";
-        const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
-
-        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
-        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
-        // Otherwise, the character with the dagesh will not be doubled
-        // oxlint-disable-next-line typescript/prefer-optional-chain
-        if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
-          const prevWord = cluster.syllable?.word?.prev?.value;
-          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-          }
-          return cluster.text;
-        }
-
-        const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination;
-        const dagesh = "\u{05BC}";
-        const noDageshHebrew = typeof heb === "string" ? heb.replace(dagesh, "") : heb.source.replace(dagesh, "");
-        if (!prevCoda?.includes(noDageshHebrew)) {
-          return cluster.text;
-        }
-
-        return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-      }
-    },
-    {
-      TITLE: "Tsadi with Dagesh",
-      DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
-      FEATURE: "cluster",
-      HEBREW: /צּ/u,
-      TRANSLITERATION: (cluster, heb, schema) => {
-        //  /ת(?!\u{05b0})/u rule for explanation
-
-        const digraph = schema["TSADI"];
-        const secondChar = "ˁ";
-        const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
-
-        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
-        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
-        // Otherwise, the character with the dagesh will not be doubled
-        // oxlint-disable-next-line typescript/prefer-optional-chain
-        if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
-          const prevWord = cluster.syllable?.word?.prev?.value;
-          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-          }
-          return cluster.text;
-        }
-
-        const prevCoda = cluster.syllable?.prev?.value?.codaWithGemination;
-        const dagesh = "\u{05BC}";
-        const noDageshHebrew = typeof heb === "string" ? heb.replace(dagesh, "") : heb.source.replace(dagesh, "");
-        if (!prevCoda?.includes(noDageshHebrew)) {
-          return cluster.text;
-        }
-
-        return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-      }
-    },
+    digraphWithDagesh("Tav with Dagesh", /תּ/u, /ת/u, "TAV_DAGESH", "ʰ"),
+    digraphWithDagesh("Pe with Dagesh", /פּ/u, /פ/u, "PE_DAGESH", "ʰ"),
+    digraphWithDagesh("Kaf with Dagesh", /כּ|ךּ/u, /[כך]/u, "KAF_DAGESH", "ʰ"),
+    digraphWithDagesh("Tet with Dagesh", /טּ/u, /ט/u, "TET", "ˁ"),
+    digraphWithDagesh("Tsadi with Dagesh", /צּ/u, /צ/u, "TSADI", "ˁ"),
     {
       TITLE: "Quiescent Alef",
       DESCRIPTION: "Transliterate an alef with no vowel as quiesced.",

@@ -640,3 +640,35 @@ describe("ticket 020: Issachar keeps its prefixes", () => {
     expect(transliterate(hebrew, schema)).toBe(transliteration);
   });
 });
+
+// tickets/026-tiberian-copy-pasted-digraph-rules.md
+describe("ticket 026: the five digraph rules are built from one factory", () => {
+  test("the rules keep their titles and order", () => {
+    const titles = (schema.ADDITIONAL_FEATURES ?? []).map((feature) => feature.TITLE);
+    const start = titles.indexOf("Tav with Dagesh");
+    expect(titles.slice(start, start + 5)).toEqual([
+      "Tav with Dagesh",
+      "Pe with Dagesh",
+      "Kaf with Dagesh",
+      "Tet with Dagesh",
+      "Tsadi with Dagesh"
+    ]);
+  });
+
+  test.each`
+    description                              | hebrew               | transliteration
+    ${"doubled tav"}                         | ${"וַתֵּ֨שֶׁב"}      | ${"vatˈtʰeːʃɛv"}
+    ${"doubled kaf"}                         | ${"וְחִכֵּ֕ךְ"}      | ${"viħikˈkʰeːeχ"}
+    ${"doubled tet"}                         | ${"חַ֭טָּאִים"}      | ${"ħɑttˁɔːˈʔiːim"}
+    ${"word-initial doubled pe"}             | ${"עֹֽשֶׂה־פְּרִ֛י"} | ${"ˌʕoːsɛː-ppʰaˈʀ̟iː"}
+    ${"dagesh lene in the middle of a word"} | ${"תִּסְפְּר֖וּ"}    | ${"tʰispʰaˈʀ̟uː"}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, schema)).toBe(transliteration);
+  });
+
+  test("without a digraph value, the normal rules are used instead of printing 'undefined'", () => {
+    expect(transliterate("וַתֵּ֨שֶׁב", { ...schema, TAV_DAGESH: undefined })).toBe("vaθˈθeːʃɛv");
+    expect(transliterate("מַה־תָּעִ֧ירוּ", { ...schema, TAV_DAGESH: undefined })).toBe("mah-θθɔːˈʕiːʀ̟uː");
+  });
+});
