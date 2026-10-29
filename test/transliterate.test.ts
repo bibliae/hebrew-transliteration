@@ -866,3 +866,17 @@ describe("ticket 021: new SBL() without arguments", () => {
     expect(transliterate("קֻ֣ם הָאָרֶץ", { ADDITIONAL_FEATURES: [...oldFeatures, newFeature] })).toBe("qūm The Earth");
   });
 });
+
+// tickets/022-dead-code-in-rules.md
+describe("ticket 022: a maqaf after a mater is kept (the removed maqaf workaround was not needed)", () => {
+  test.each`
+    hebrew             | transliteration  | maqaf
+    ${"כִּֽי־טוֹב"}    | ${"kî-ṭôb"}      | ${"kî=ṭôb"}
+    ${"אֵיפֹה־אַתָּה"} | ${"ʾêpōh-ʾattâ"} | ${"ʾêpōh=ʾattâ"}
+    ${"כֹּה־אָמַר"}    | ${"kōh-ʾāmar"}   | ${"kōh=ʾāmar"}
+    ${"לוֹ־"}          | ${"lô-"}         | ${"lô="}
+  `("$hebrew → $transliteration", ({ hebrew, transliteration, maqaf }) => {
+    expect(transliterate(hebrew)).toBe(transliteration);
+    expect(transliterate(hebrew, { MAQAF: "=" })).toBe(maqaf);
+  });
+});

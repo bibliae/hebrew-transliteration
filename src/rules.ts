@@ -330,26 +330,6 @@ const isDageshChazaq = (cluster: Cluster, schema: Schema) => {
   return prevCoda === cluster.syllable?.onset;
 };
 
-const joinSyllableChars = (syl: Syllable, sylChars: string[], schema: Schema): string => {
-  const isInConstruct = syl.word?.isInConstruct;
-
-  if (isInConstruct) {
-    return sylChars.map(mapChars(schema)).join("");
-  }
-
-  if (!syl.isAccented) {
-    return sylChars.map(mapChars(schema)).join("");
-  }
-
-  // if syllable is only punctuation (e.g. a paseq), it should not receive a stress marker
-  const isOnlyPunctuation = syl.clusters.map((c) => c.isPunctuation).every((c) => c);
-  if (isOnlyPunctuation) {
-    return sylChars.map(mapChars(schema)).join("");
-  }
-
-  return sylChars.map(mapChars(schema)).join("");
-};
-
 /**
  * Maps Hebrew characters to schema
  *
@@ -425,14 +405,10 @@ const materFeatures = (syl: Syllable, schema: Schema) => {
   const materText = mater.text;
   const prevText = (prev?.text || "").replace(taamim, "");
   // string comprised of all non-mater clusters in a syl with a mater
-  let noMaterText = syl.clusters
+  const noMaterText = syl.clusters
     .filter((c) => !c.isMater)
     .map((c) => cluterRules(c, schema))
     .join("");
-
-  // workaround for maqaf
-  const hasMaqaf = mater.text.includes("־");
-  noMaterText = hasMaqaf ? noMaterText.concat("־") : noMaterText;
 
   if (/י/.test(materText)) {
     // hiriq
@@ -659,12 +635,12 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
   const hasMater = syl.clusters.map((c) => c.isMater).includes(true);
   if (hasMater) {
     const materSyl = materFeatures(syl, schema);
-    const text = joinSyllableChars(syl, [...materSyl], schema);
+    const text = [...materSyl].map(mapChars(schema)).join("");
     return addStressMarker(text, syl, schema);
   }
 
   const clusters = syl.clusters.map((cluster) => cluterRules(cluster, schema));
-  const joined = joinSyllableChars(syl, clusters, schema).replace(taamim, "");
+  const joined = clusters.map(mapChars(schema)).join("").replace(taamim, "");
 
   // syllable is 3ms sufx
   const mSSuffix = /\u{05B8}\u{05D9}\u{05D5}/u;
