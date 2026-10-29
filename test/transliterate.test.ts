@@ -3,7 +3,7 @@ import type { Syllable } from "havarotjs/syllable";
 import { describe, expect, test } from "vitest";
 import type { Schema } from "../src/index";
 import { transliterate } from "../src/index";
-import { brillAcademic, sblAcademicSpirantization } from "../src/schemas/index";
+import { brillAcademic, michiganClaremont, sblAcademicSpirantization } from "../src/schemas/index";
 
 interface Inputs {
   hebrew: string;
@@ -604,5 +604,28 @@ describe("ticket 008: HOLAM_HASER and FURTIVE_PATAH are used", () => {
   `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
     const { hebrew, transliteration, options } = inputs;
     expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
+
+// tickets/009-stress-marker-regex-not-escaped.md
+describe("ticket 009: stress marker treats schema vowels as plain text", () => {
+  const after = { location: "after-vowel", mark: "'" } as const;
+  const before = { location: "before-vowel", mark: "'" } as const;
+
+  test("a vowel with regex syntax does not throw", () => {
+    expect(transliterate("מֶ֣לֶךְ", { SEGOL: "(e", STRESS_MARKER: after })).toBe("m(e'l(ek");
+  });
+
+  test("an empty vowel does not match at the start of the syllable", () => {
+    expect(transliterate("מֶ֣לֶךְ", { HATAF_PATAH: "", STRESS_MARKER: after })).toBe("me'lek");
+  });
+
+  test("a vowel with a '.' only matches itself (Michigan-Claremont SHUREQ 'W.')", () => {
+    expect(transliterate("וַ֣יֵּלֶךְ", { ...michiganClaremont, STRESS_MARKER: before })).toBe("W'AYY\"LEK");
+    expect(transliterate("ק֣וּם", { ...michiganClaremont, STRESS_MARKER: after })).toBe("QW.'M");
+  });
+
+  test("the mark is inserted literally", () => {
+    expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: { location: "after-vowel", mark: "$&" } })).toBe("me$&lek");
   });
 });

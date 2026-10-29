@@ -90,18 +90,26 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
     schema.HOLAM_VAV,
     schema.SHUREQ
   ]
-    .filter((v) => typeof v === "string")
+    // an empty vowel would match at the start of every syllable
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
     .sort((a, b) => b.length - a.length);
-  const vowelRgx = new RegExp(`${vowels.join("|")}`);
-  const match = text.match(vowelRgx);
-
-  if (location === "before-vowel") {
-    return match?.length ? text.replace(match[0], `${mark}${match[0]}`) : text;
+  if (!vowels.length) {
+    return text;
   }
 
-  // after-vowel
-  return match?.length ? text.replace(match[0], `${match[0]}${mark}`) : text;
+  // schema values are plain text, so escape any regex syntax in them (e.g. the "." in "W.")
+  const vowelRgx = new RegExp(vowels.map(escapeRegExp).join("|"), "u");
+  const match = vowelRgx.exec(text);
+  if (!match) {
+    return text;
+  }
+
+  const index = location === "before-vowel" ? match.index : match.index + match[0].length;
+  return text.slice(0, index) + mark + text.slice(index);
 };
+
+/** Escapes a string so that it matches itself literally when used in a RegExp */
+const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const copySyllable = (newText: string, old: Syllable) => {
   const newClusters = newText.split(clusterSplitGroup).map((clusterString) => new Cluster(clusterString, true));
