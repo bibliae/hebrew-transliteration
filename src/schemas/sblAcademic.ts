@@ -1,4 +1,61 @@
+import type { SyllableFeature } from "../schema.js";
 import { Schema } from "../schema.js";
+
+/**
+ * Marks a hiriq or qubuts written defectively (i.e. without a mater) as long when it is in an accented syllable.
+ *
+ * One of SBL's default `ADDITIONAL_FEATURES`. Built-in schemas that follow SBL's academic style use it too.
+ */
+export const defectiveLongVowels: SyllableFeature = {
+  TITLE: "Defective Long Vowels",
+  DESCRIPTION:
+    "Transliterate syllables with a hiriq or qubuts written defectively (i.e. without a mater) when in an accented syllable.",
+  FEATURE: "syllable",
+  HEBREW: /[\u{05B4}\u{05BB}]/u,
+  TRANSLITERATION: (syllable, heb, schema) => {
+    // matches any syllable with a hiriq or qubuts,
+    // and checks for a "long" vowel (i.e a hiriq or qubuts in an accented syllable without a mater)
+    const hasMater = syllable.clusters.some((cluster) => cluster.isMater);
+    if (syllable.isAccented && !hasMater) {
+      const macron = "̄";
+      const vowel = syllable.hasVowelName("HIRIQ") ? schema["HIRIQ"] : schema["QUBUTS"];
+      // the schema may already mark the vowel as long (e.g. QUBUTS: "ū"), so don't add a second macron
+      if (vowel.normalize("NFD").includes(macron)) {
+        return syllable.text;
+      }
+      return syllable.text.replace(heb, (vowel + macron).normalize("NFC"));
+    }
+    return syllable.text;
+  }
+};
+
+/**
+ * Removes a euphonic dagesh so that it is not doubled.
+ *
+ * One of SBL's default `ADDITIONAL_FEATURES`. Several built-in schemas use it too.
+ */
+export const euphonicDagesh: SyllableFeature = {
+  TITLE: "Euphonic Dagesh",
+  DESCRIPTION:
+    "Remove the dagesh from syllables that have a euphonic dagesh in the context of a preceding word in construct state.",
+  FEATURE: "syllable",
+  HEBREW: "\u{05BC}",
+  TRANSLITERATION: (syllable, heb) => {
+    // matches any word with a dagesh,
+    // and checks for a euphonic dagesh
+    const currWord = syllable?.word?.value;
+    const prevWord = currWord?.prev?.value;
+    if (!currWord || !prevWord || !prevWord.isInConstruct) {
+      return syllable.text;
+    }
+
+    if (syllable.prev) {
+      return syllable.text;
+    }
+
+    return syllable.text.replace(heb, "");
+  }
+};
 
 /**
  * The default schema according to SBL's academic style guide.
@@ -170,8 +227,12 @@ export class SBL extends Schema {
    *        const hasMater = syllable.clusters.some((cluster) => cluster.isMater);
    *        if (syllable.isAccented && !hasMater) {
    *          const macron = "\u0304";
-   *          const output = syllable.hasVowelName("HIRIQ") ? schema["HIRIQ"] + macron : schema["QUBUTS"] + macron;
-   *          return syllable.text.replace(heb, output.normalize("NFC"));
+   *          const vowel = syllable.hasVowelName("HIRIQ") ? schema["HIRIQ"] : schema["QUBUTS"];
+   *          // the schema may already mark the vowel as long (e.g. QUBUTS: "\u016b"), so don't add a second macron
+   *          if (vowel.normalize("NFD").includes(macron)) {
+   *            return syllable.text;
+   *          }
+   *          return syllable.text.replace(heb, (vowel + macron).normalize("NFC"));
    *        }
    *        return syllable.text;
    *      }
@@ -391,48 +452,7 @@ export class SBL extends Schema {
     this.DIVINE_NAME = schema.DIVINE_NAME ?? "yhwh";
     this.DIVINE_NAME_ELOHIM = schema.DIVINE_NAME_ELOHIM ?? undefined;
     this.SYLLABLE_SEPARATOR = schema.SYLLABLE_SEPARATOR ?? undefined;
-    this.ADDITIONAL_FEATURES = schema.ADDITIONAL_FEATURES ?? [
-      {
-        TITLE: "Defective Long Vowels",
-        DESCRIPTION:
-          "Transliterate syllables with a hiriq or qubuts written defectively (i.e. without a mater) when in an accented syllable.",
-        FEATURE: "syllable",
-        HEBREW: /[\u{05B4}\u{05BB}]/u,
-        TRANSLITERATION: (syllable, heb, schema) => {
-          // matches any syllable with a hiriq or qubuts,
-          // and checks for a "long" vowel (i.e a hiriq or qubuts in an accented syllable without a mater)
-          const hasMater = syllable.clusters.some((cluster) => cluster.isMater);
-          if (syllable.isAccented && !hasMater) {
-            const macron = "\u0304";
-            const output = syllable.hasVowelName("HIRIQ") ? schema["HIRIQ"] + macron : schema["QUBUTS"] + macron;
-            return syllable.text.replace(heb, output.normalize("NFC"));
-          }
-          return syllable.text;
-        }
-      },
-      {
-        TITLE: "Euphonic Dagesh",
-        DESCRIPTION:
-          "Remove the dagesh from syllables that have a euphonic dagesh in the context of a preceding word in construct state.",
-        FEATURE: "syllable",
-        HEBREW: "\u{05BC}",
-        TRANSLITERATION: (syllable, heb) => {
-          // matches any word with a dagesh,
-          // and checks for a euphonic dagesh
-          const currWord = syllable?.word?.value;
-          const prevWord = currWord?.prev?.value;
-          if (!currWord || !prevWord || !prevWord.isInConstruct) {
-            return syllable.text;
-          }
-
-          if (syllable.prev) {
-            return syllable.text;
-          }
-
-          return syllable.text.replace(heb, "");
-        }
-      }
-    ];
+    this.ADDITIONAL_FEATURES = schema.ADDITIONAL_FEATURES ?? [defectiveLongVowels, euphonicDagesh];
     this.STRESS_MARKER = schema.STRESS_MARKER ?? undefined;
     this.longVowels = schema.longVowels ?? true;
     this.qametsQatan = schema.qametsQatan ?? true;

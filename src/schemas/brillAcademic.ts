@@ -1,4 +1,5 @@
 import type { Schema } from "../schema.js";
+import { euphonicDagesh } from "./sblAcademic.js";
 
 export const brillAcademic: Schema = {
   VOCAL_SHEVA: "ᵉ",
@@ -65,6 +66,7 @@ export const brillAcademic: Schema = {
   TAV_DAGESH: "t",
   DIVINE_NAME: "yhwh",
   SYLLABLE_SEPARATOR: "",
+  ADDITIONAL_FEATURES: [euphonicDagesh],
   longVowels: true,
   qametsQatan: true,
   sqnmlvy: true,

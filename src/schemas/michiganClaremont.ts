@@ -1,4 +1,5 @@
 import type { Schema } from "../schema.js";
+import { euphonicDagesh } from "./sblAcademic.js";
 
 export const michiganClaremont: Schema = {
   VOCAL_SHEVA: ":",
@@ -58,6 +59,7 @@ export const michiganClaremont: Schema = {
   SIN: "&",
   TAV: "T",
   DIVINE_NAME: "YHWH",
+  ADDITIONAL_FEATURES: [euphonicDagesh],
   longVowels: true,
   qametsQatan: false,
   shevaAfterMeteg: true,

@@ -1,4 +1,5 @@
 import type { Schema } from "../schema.js";
+import { defectiveLongVowels, euphonicDagesh } from "./sblAcademic.js";
 
 export const sblAcademicSpirantization: Schema = {
   VOCAL_SHEVA: "ə",
@@ -64,6 +65,7 @@ export const sblAcademicSpirantization: Schema = {
   TAV: "ṯ",
   TAV_DAGESH: "t",
   DIVINE_NAME: "yhwh",
+  ADDITIONAL_FEATURES: [defectiveLongVowels, euphonicDagesh],
   longVowels: true,
   qametsQatan: true,
   shevaAfterMeteg: true,
