@@ -675,27 +675,47 @@ export const wordRules = (word: Word, schema: Schema): string | Word => {
   }
 
   const wordFeatures = schema.ADDITIONAL_FEATURES?.filter((seq) => seq.FEATURE === "word");
-  if (wordFeatures) {
-    const text = word.text.replace(taamim, "");
-    for (const feature of wordFeatures) {
-      const heb = new RegExp(feature.HEBREW, "u");
-      if (heb.test(text)) {
-        const transliteration = feature.TRANSLITERATION;
-        const passThrough = feature.PASS_THROUGH ?? true;
-
-        if (typeof transliteration === "string") {
-          return replaceAndTransliterate(text, heb, transliteration, schema);
-        }
-
-        if (!passThrough) {
-          return transliteration(word, feature.HEBREW, schema);
-        }
-
-        return new Word(transliteration(word, feature.HEBREW, schema), schema);
-      }
-    }
+  if (!wordFeatures) {
     return word;
   }
 
-  return word;
+  // like cluster and syllable features, each pass-through feature works on the result of the previous one
+  let current = word;
+  for (const feature of wordFeatures) {
+    const text = current.text.replace(taamim, "");
+    const heb = new RegExp(feature.HEBREW, "u");
+    if (!heb.test(text)) {
+      continue;
+    }
+
+    const transliteration = feature.TRANSLITERATION;
+    const passThrough = feature.PASS_THROUGH ?? true;
+
+    if (typeof transliteration === "string") {
+      return replaceAndTransliterate(text, heb, transliteration, schema);
+    }
+
+    if (!passThrough) {
+      return transliteration(current, feature.HEBREW, schema);
+    }
+
+    const newText = transliteration(current, feature.HEBREW, schema);
+    // only rebuild the word if the feature changed it
+    if (newText !== current.text && newText !== text) {
+      current = copyWord(newText, current, schema);
+    }
+  }
+
+  return current;
+};
+
+/**
+ * Creates a new Word from new text, keeping the links to the words around the old one
+ * (e.g. so a following word can still see that this word is in construct)
+ */
+const copyWord = (newText: string, old: Word, schema: Schema) => {
+  const newWord = new Word(newText, schema);
+  newWord.prev = old.prev;
+  newWord.next = old.next;
+  return newWord;
 };

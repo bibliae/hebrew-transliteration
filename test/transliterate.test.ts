@@ -678,3 +678,49 @@ describe("ticket 012: before-syllable stress marker on a doubled consonant", () 
     expect(transliterate(hebrew, options)).toBe(transliteration);
   });
 });
+
+// tickets/013-word-feature-pass-through-stops-chain.md
+describe("ticket 013: word features chain and keep the word's context", () => {
+  // setting ADDITIONAL_FEATURES turns off SBL's default features, so compare against a schema that also sets them
+  const neverMatches: Schema["ADDITIONAL_FEATURES"] = [{ FEATURE: "cluster", HEBREW: "NOMATCH", TRANSLITERATION: "x" }];
+
+  test("a word feature that changes nothing does not change the output", () => {
+    const baseline = transliterate("מַה־זֹּאת", { ADDITIONAL_FEATURES: neverMatches });
+    expect(baseline).toBe("mah-zzōʾt");
+    expect(
+      transliterate("מַה־זֹּאת", {
+        ADDITIONAL_FEATURES: [{ FEATURE: "word", HEBREW: "ז", TRANSLITERATION: (word) => word.text }]
+      })
+    ).toBe(baseline);
+  });
+
+  test("a word changed by a feature still knows the previous word is in construct", () => {
+    expect(
+      transliterate("מַה־זֹּאת", {
+        ADDITIONAL_FEATURES: [{ FEATURE: "word", HEBREW: "ז", TRANSLITERATION: (word) => word.text.replace("א", "") }]
+      })
+    ).toBe("mah-zzōt");
+  });
+
+  test("a later word feature still applies after a pass-through feature", () => {
+    expect(
+      transliterate("דָּבָר", {
+        ADDITIONAL_FEATURES: [
+          { FEATURE: "word", HEBREW: "ד", TRANSLITERATION: (word) => word.text },
+          { FEATURE: "word", HEBREW: "ב", TRANSLITERATION: "B" }
+        ]
+      })
+    ).toBe("dāBār");
+  });
+
+  test("a later word feature sees the output of an earlier one", () => {
+    expect(
+      transliterate("דָּבָר", {
+        ADDITIONAL_FEATURES: [
+          { FEATURE: "word", HEBREW: "ד", TRANSLITERATION: (word) => word.text.replace("ד", "ב") },
+          { FEATURE: "word", HEBREW: "בּ", TRANSLITERATION: (word) => word.text.replace("בּ", "ג") }
+        ]
+      })
+    ).toBe("gābār");
+  });
+});
