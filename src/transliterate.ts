@@ -13,10 +13,11 @@ import { SBL } from "./schemas/index.js";
  * @returns syllable options passed into havarotjs
  *
  * @remarks
- * Sanitizes the SylOpts of the schema so as to not pass in undefined
+ * Sanitizes the SylOpts of the schema so as to not pass in undefined,
+ * which havarotjs rejects for boolean options
  */
 const getSylOpts = (schema: Partial<Schema>): SylOpts => {
-  return {
+  const sylOpts: SylOpts = {
     allowNoNiqqud: schema.allowNoNiqqud,
     article: schema.article,
     holemHaser: schema.holemHaser,
@@ -29,6 +30,8 @@ const getSylOpts = (schema: Partial<Schema>): SylOpts => {
     strict: schema.strict,
     wawShureq: schema.wawShureq
   };
+
+  return Object.fromEntries(Object.entries(sylOpts).filter(([, value]) => value !== undefined));
 };
 
 /**
