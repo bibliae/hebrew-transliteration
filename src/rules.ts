@@ -56,19 +56,16 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
     return text;
   }
 
-  function isSchemaKey(key: string): key is keyof Schema {
-    return key in schema;
-  }
-
   if (location === "before-syllable") {
-    const isDoubled = syl.clusters.map((c) => isDageshChazaq(c, schema)).includes(true);
-    if (isDoubled) {
-      const firstCluster = syl.clusters[0];
-      const name = firstCluster.chars[0].characterName;
-      const output = name && isSchemaKey(name) ? schema[name] : "";
-      const first = text.slice(0, output.length);
-      const rest = text.slice(output.length);
-      return `${first}${mark}${rest}`;
+    // a doubled consonant is split between the previous syllable and this one (e.g. hak-ˈkol),
+    // so the mark goes before the second half, where the consonant's own value starts again
+    const onset = syl.clusters[0];
+    if (onset && typeof schema.DAGESH_CHAZAQ === "boolean" && isDageshChazaq(onset, schema)) {
+      const consonant = getConsonantValue(onset, schema);
+      const index = consonant ? text.indexOf(consonant, 1) : -1;
+      if (index > 0) {
+        return `${text.slice(0, index)}${mark}${text.slice(index)}`;
+      }
     }
 
     return `${mark}${text}`;
@@ -119,6 +116,42 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
 
   const index = location === "before-vowel" ? match.index : match.index + match[0].length;
   return text.slice(0, index) + mark + text.slice(index);
+};
+
+/** The schema keys for consonants that have a separate value with a dagesh */
+const dageshKeys: Partial<Record<string, keyof Schema>> = {
+  BET: "BET_DAGESH",
+  GIMEL: "GIMEL_DAGESH",
+  DALET: "DALET_DAGESH",
+  KAF: "KAF_DAGESH",
+  FINAL_KAF: "KAF_DAGESH",
+  PE: "PE_DAGESH",
+  TAV: "TAV_DAGESH"
+};
+
+/**
+ * Gets the schema value of a cluster's consonant, as it is output when it is not doubled
+ *
+ * @returns the value, or an empty string if the cluster does not start with a consonant in the schema
+ */
+const getConsonantValue = (cluster: Cluster, schema: Schema): string => {
+  const name = cluster.chars[0]?.characterName;
+  if (!name) {
+    return "";
+  }
+
+  if (name === "SHIN" && /\u{05C2}/u.test(cluster.text)) {
+    return schema.SIN;
+  }
+
+  const dageshKey = /\u{05BC}/u.test(cluster.text) ? dageshKeys[name] : undefined;
+  const dageshValue = dageshKey ? schema[dageshKey] : undefined;
+  if (typeof dageshValue === "string" && dageshValue) {
+    return dageshValue;
+  }
+
+  const value = name in schema ? schema[name as keyof Schema] : undefined;
+  return typeof value === "string" ? value : "";
 };
 
 /** Adds a macron to a vowel, composing it where possible (e.g. "i" → "ī") */

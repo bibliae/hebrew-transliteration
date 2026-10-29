@@ -185,7 +185,7 @@ describe("consonant features", () => {
     describe("qof", () => {
       test.each`
         description               | hebrew               | transliteration
-        ${"word initial doubled"} | ${"וּמַה־קִּ֝צִּ֗י"} | ${"wumah-q̟q̟issˈˁiː"}
+        ${"word initial doubled"} | ${"וּמַה־קִּ֝צִּ֗י"} | ${"wumah-q̟q̟isˈsˁiː"}
       `("$description", (inputs: Inputs) => {
         const { hebrew, transliteration } = inputs;
         expect(transliterate(hebrew, schema)).toBe(transliteration);
@@ -608,6 +608,18 @@ describe("ticket 007: construct doubling only applies to the first letter of the
     ${"word-initial tav is still doubled"}   | ${"מִי־תָּבוֹא"}     | ${"miː-ttʰɔːˈvoː"}
     ${"word-initial tsadi is still doubled"} | ${"מִי־צָּרָה"}      | ${"miː-ssˁɔːˈʀ̟ɔː"}
     ${"word-initial kaf is still doubled"}   | ${"מַה־כֹּ֣ה"}       | ${"mah-kˈkʰoː"}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, schema)).toBe(transliteration);
+  });
+});
+
+// tickets/012-stress-before-syllable-doubled-consonant.md
+describe("ticket 012: stress marker splits a doubled tet digraph correctly", () => {
+  test.each`
+    description                              | hebrew          | transliteration
+    ${"doubled tet in the middle of a word"} | ${"מִי־מַטָּה"} | ${"miː-mɑtˈtˁɔː"}
+    ${"doubled tet after a construct word"}  | ${"מַה־טּ֥וֹב"} | ${"mah-tˈtˁoːov"}
   `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
     const { hebrew, transliteration } = inputs;
     expect(transliterate(hebrew, schema)).toBe(transliteration);

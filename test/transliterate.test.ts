@@ -3,7 +3,7 @@ import type { Syllable } from "havarotjs/syllable";
 import { describe, expect, test } from "vitest";
 import type { Schema } from "../src/index";
 import { transliterate } from "../src/index";
-import { brillAcademic, michiganClaremont, sblAcademicSpirantization } from "../src/schemas/index";
+import { brillAcademic, michiganClaremont, sblAcademicSpirantization, sblSimple } from "../src/schemas/index";
 
 interface Inputs {
   hebrew: string;
@@ -658,5 +658,23 @@ describe("ticket 011: stress marker on SBL's long ī and ū", () => {
   `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
     const { hebrew, transliteration, options } = inputs;
     expect(transliterate(hebrew, options).normalize("NFC")).toBe(transliteration.normalize("NFC"));
+  });
+});
+
+// tickets/012-stress-before-syllable-doubled-consonant.md
+describe("ticket 012: before-syllable stress marker on a doubled consonant", () => {
+  const stress = { location: "before-syllable", mark: "ˈ" } as const;
+
+  test.each`
+    description                                     | hebrew          | transliteration   | options
+    ${"dagesh value differs from the plain letter"} | ${"הַכֹּ֣ל"}    | ${"hakˈkol"}      | ${{ ...sblSimple, STRESS_MARKER: stress }}
+    ${"with a syllable separator"}                  | ${"הַמֶּ֣לֶךְ"} | ${"ham-ˈme-lek"}  | ${{ SYLLABLE_SEPARATOR: "-", STRESS_MARKER: stress }}
+    ${"digraph for shin"}                           | ${"הַשָּׁ֣ם"}   | ${"hashˈshām"}    | ${{ SHIN: "sh", STRESS_MARKER: stress }}
+    ${"digraph for sin"}                            | ${"הַשָּׂ֣ר"}   | ${"has'ˈs'ār"}    | ${{ SIN: "s'", STRESS_MARKER: stress }}
+    ${"dagesh chazaq as a mark, not doubled"}       | ${"שַׁבָּ֑ת"}   | ${"šaˈb\u0301āt"} | ${{ DAGESH_CHAZAQ: "\u0301", STRESS_MARKER: stress }}
+    ${"default schema (unchanged)"}                 | ${"הַמֶּ֣לֶךְ"} | ${"hamˈmelek"}    | ${{ STRESS_MARKER: stress }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
   });
 });
