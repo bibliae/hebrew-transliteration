@@ -106,3 +106,31 @@ describe("ticket 014: holam haser for vav (U+05BA) can be removed", () => {
     expect(remove("עָוֺן", { HOLAM: true })).toContain(holamHaser);
   });
 });
+
+// tickets/015-remove-changes-untouched-text.md
+describe("ticket 015: remove() only removes what it is asked to", () => {
+  test("a holam male stays on its vav", () => {
+    // ל + ו + holam, not ל + holam + ו
+    expect(remove("שָׁלוֹם")).toBe("\u{05E9}\u{05C1}\u{05B8}\u{05DC}\u{05D5}\u{05B9}\u{05DD}");
+  });
+
+  test("leading whitespace is kept, with or without vowels", () => {
+    expect(remove("  שָׁלוֹם")).toBe("  " + remove("שָׁלוֹם"));
+    expect(remove("  שלום")).toBe("  שלום");
+  });
+
+  test("text that is not Hebrew is not normalized", () => {
+    expect(remove("שָׁלוֹם café ½")).toBe(remove("שָׁלוֹם") + " café ½");
+    expect(remove("שָׁלוֹם café")).toBe(remove("שָׁלוֹם") + " café");
+  });
+
+  test("marks are still put in order", () => {
+    // kaf + hiriq + dagesh + yod → kaf + dagesh + hiriq + yod
+    expect(remove("\u{05DB}\u{05B4}\u{05BC}\u{05D9}", {})).toBe("\u{05DB}\u{05BC}\u{05B4}\u{05D9}");
+  });
+
+  test("Hebrew presentation forms are still decomposed", () => {
+    // U+FB2C is shin + dagesh + shin dot
+    expect(remove("\u{FB2C}\u{05B8}", all)).toBe("\u{05E9}");
+  });
+});

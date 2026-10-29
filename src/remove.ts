@@ -1,4 +1,4 @@
-import { sequence } from "./sequence.js";
+import { sequenceMarks } from "./sequence.js";
 
 /**
  * @categoryDescription Taamim
@@ -618,7 +618,7 @@ export const all: RemoveOptions = {
 export const remove = (text: string, options: RemoveOptions = { ...accents, METEG: true, RAFE: true }): string => {
   /** all the keys of options that are to be removed */
   const keys = Object.keys(options).filter((k) => (k in options ? options[k as OptionKey] : false));
-  const sequenced = sequence(text);
+  const sequenced = sequenceMarks(text);
   let result = keys.reduce((a, c) => {
     const key = removeMap[c as OptionKey] ?? null;
     if (key) {
