@@ -3,6 +3,7 @@ import type { Syllable } from "havarotjs/syllable";
 import { describe, expect, test } from "vitest";
 import type { Schema } from "../src/index";
 import { transliterate } from "../src/index";
+import { brillAcademic, sblAcademicSpirantization } from "../src/schemas/index";
 
 interface Inputs {
   hebrew: string;
@@ -515,5 +516,38 @@ describe("extending SBL schema for optional arguments", () => {
         })
       ).toBe("ʾahbahn");
     });
+  });
+});
+
+// tickets/003-euphonic-dagesh-strips-dagesh-lene.md
+describe("ticket 003: euphonic dagesh only after an open syllable, and only on the first consonant", () => {
+  const spirantization: Partial<Schema> = { BET: "v", BET_DAGESH: "b", KAF: "kh", KAF_DAGESH: "k" };
+
+  test.each`
+    description                                         | hebrew           | transliteration | options
+    ${"dagesh lene after a closed syllable stays"}      | ${"עַל־בְּנֵי"}  | ${"ʿal-bənê"}   | ${spirantization}
+    ${"dagesh lene after a closed syllable stays, kaf"} | ${"אֶת־כָּל"}    | ${"ʾet-kol"}    | ${spirantization}
+    ${"euphonic dagesh on BeGaDKePaT stays plosive"}    | ${"מַה־בֶּ֗צַע"} | ${"mah-beṣaʿ"}  | ${spirantization}
+    ${"euphonic dagesh is not doubled"}                 | ${"מַה־שְּׁמוֹ"} | ${"mah-šəmô"}   | ${{}}
+    ${"euphonic dagesh is not doubled, nun"}            | ${"לְכָה־נָּא"}  | ${"ləkâ-nāʾ"}   | ${{}}
+    ${"shureq after a construct word keeps its dagesh"} | ${"כִּֽי־הוּא"}  | ${"kî-hûʾ"}     | ${{}}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+
+  test.each`
+    hebrew           | transliteration
+    ${"אֶת־כָּל"}    | ${"ʾet\u0331-kol"}
+    ${"עַל־בְּנֵי"}  | ${"ʿal-bənê"}
+    ${"בֶּן־דָּוִד"} | ${"ben-dāwīd\u0331"}
+    ${"מַה־בֶּ֗צַע"} | ${"mah-beṣaʿ"}
+  `("sblAcademicSpirantization: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, sblAcademicSpirantization)).toBe(transliteration);
+  });
+
+  test("brillAcademic keeps the dagesh lene after a closed syllable", () => {
+    expect(transliterate("עַל־פְּנֵי", brillAcademic)).toBe("ʿal-pᵉnê");
   });
 });

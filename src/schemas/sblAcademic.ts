@@ -40,7 +40,7 @@ export const euphonicDagesh: SyllableFeature = {
     "Remove the dagesh from syllables that have a euphonic dagesh in the context of a preceding word in construct state.",
   FEATURE: "syllable",
   HEBREW: "\u{05BC}",
-  TRANSLITERATION: (syllable, heb) => {
+  TRANSLITERATION: (syllable, _heb, schema) => {
     // matches any word with a dagesh,
     // and checks for a euphonic dagesh
     const currWord = syllable?.word?.value;
@@ -53,7 +53,35 @@ export const euphonicDagesh: SyllableFeature = {
       return syllable.text;
     }
 
-    return syllable.text.replace(heb, "");
+    // a euphonic dagesh only follows a word ending in an open syllable;
+    // after a closed syllable, a dagesh is a dagesh lene (e.g. אֶת־כָּל)
+    if (prevWord.syllables.at(-1)?.isClosed) {
+      return syllable.text;
+    }
+
+    // only a dagesh in the first consonant can be euphonic, not e.g. a shureq (כִּי־הוּא)
+    const onsetDagesh = /^([\u{05D0}-\u{05EA}][\u{05C1}\u{05C2}]?)\u{05BC}/u;
+    const match = syllable.text.match(onsetDagesh);
+    if (!match) {
+      return syllable.text;
+    }
+
+    // a BeGaDKePaT letter with a euphonic dagesh is still a plosive,
+    // so use the schema's plosive value (if any) rather than letting it spirantize
+    const plosives: Record<string, string | undefined> = {
+      "\u{05D1}": schema.BET_DAGESH,
+      "\u{05D2}": schema.GIMEL_DAGESH,
+      "\u{05D3}": schema.DALET_DAGESH,
+      "\u{05DB}": schema.KAF_DAGESH,
+      "\u{05E4}": schema.PE_DAGESH,
+      "\u{05EA}": schema.TAV_DAGESH
+    };
+    const plosive = plosives[match[1]];
+    if (plosive) {
+      return syllable.text.replace(onsetDagesh, () => plosive);
+    }
+
+    return syllable.text.replace(onsetDagesh, "$1");
   }
 };
 
@@ -217,47 +245,12 @@ export class SBL extends Schema {
    * @category Orthographic Features
    * @default
    * ```js
-   * [
-   *  {
-   *    FEATURE: "syllable",
-   *    HEBREW: /[\u{05B4}\u{05BB}]/u,
-   *    TRANSLITERATION: (syllable, heb, schema) => {
-   *        // matches any syllable with a hiriq or qubuts,
-   *        // and checks for a "long" vowel (i.e a hiriq or qubuts in an accented syllable without a mater)
-   *        const hasMater = syllable.clusters.some((cluster) => cluster.isMater);
-   *        if (syllable.isAccented && !hasMater) {
-   *          const macron = "\u0304";
-   *          const vowel = syllable.hasVowelName("HIRIQ") ? schema["HIRIQ"] : schema["QUBUTS"];
-   *          // the schema may already mark the vowel as long (e.g. QUBUTS: "\u016b"), so don't add a second macron
-   *          if (vowel.normalize("NFD").includes(macron)) {
-   *            return syllable.text;
-   *          }
-   *          return syllable.text.replace(heb, (vowel + macron).normalize("NFC"));
-   *        }
-   *        return syllable.text;
-   *      }
-   *    },
-   *    {
-   *      FEATURE: "syllable",
-   *      HEBREW: "\u{05BC}",
-   *      TRANSLITERATION: (syllable, heb) => {
-   *        // matches any word with a dagesh,
-   *        // and checks for a euphonic dagesh
-   *        const currWord = syllable?.word?.value;
-   *        const prevWord = currWord?.prev?.value;
-   *        if (!currWord || !prevWord || !prevWord.isInConstruct) {
-   *          return syllable.text;
-   *        }
-   *
-   *        if (syllable.prev) {
-   *          return syllable.text;
-   *        }
-   *
-   *        return syllable.text.replace(heb, "");
-   *      }
-   *    }
-   * ]
+   * [defectiveLongVowels, euphonicDagesh]
    * ```
+   *
+   * - `defectiveLongVowels`: in an accented syllable, a hiriq or qubuts written without a mater is long (`ī`, `ū`)
+   * - `euphonicDagesh`: a dagesh in the first consonant of a word that follows a construct word ending in an open syllable is euphonic,
+   *   so the consonant is not doubled (`mah-šəmô`); a BeGaDKePaT letter stays a plosive
    *
    * @example
    * Extending SBL with a new feature and keeping the default features
