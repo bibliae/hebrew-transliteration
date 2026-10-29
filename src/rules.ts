@@ -6,6 +6,9 @@ import type { Schema } from "./schema.js";
 
 const taamim = /[\u{0591}-\u{05AF}\u{05BD}\u{05BF}]/gu;
 const hebLetter = /[\u{05D0}-\u{05F2}]/u;
+/** the letters of the Divine Name, with any points or accents between them */
+const divineNameLetters =
+  /\u{05D9}[^\u{05D0}-\u{05F4}]*\u{05D4}[^\u{05D0}-\u{05F4}]*\u{05D5}[^\u{05D0}-\u{05F4}]*\u{05D4}/u;
 /** points and accents that attach to a letter, as opposed to punctuation such as maqaf, paseq, or sof pasuq */
 const letterMarks = /[\u{0591}-\u{05BD}\u{05BF}\u{05C1}\u{05C2}\u{05C4}\u{05C5}\u{05C7}]/gu;
 
@@ -159,8 +162,10 @@ const getDageshChazaqVal = (input: string, schema: Schema, isChazaq: boolean) =>
  */
 const getDivineName = (str: string, schema: Schema): string => {
   // if DN is pointed with a hiriq, then it is read as 'elohim
+  // only look at the Divine Name itself, not at a prefix (e.g. מִ)
+  const divineNameText = str.match(divineNameLetters)?.[0] ?? str;
   const divineName =
-    schema.DIVINE_NAME_ELOHIM && /\u{05B4}/u.test(str) ? schema.DIVINE_NAME_ELOHIM : schema.DIVINE_NAME;
+    schema.DIVINE_NAME_ELOHIM && /\u{05B4}/u.test(divineNameText) ? schema.DIVINE_NAME_ELOHIM : schema.DIVINE_NAME;
 
   const chars = [...str];
   const first = chars.findIndex((char) => hebLetter.test(char));
@@ -180,6 +185,38 @@ const getDivineName = (str: string, schema: Schema): string => {
     .join("")
     .replace(letterMarks, "");
   return `${mapChars(schema)(before)}${divineName}${mapChars(schema)(after)}`;
+};
+
+/**
+ * Transliterates the prefix of a word that contains the Divine Name (e.g. the וְלַ of וְלַיהוָה)
+ *
+ * @param word a word for which `hasDivineName` is true
+ * @param schema
+ * @returns the transliterated prefix, or an empty string if there is none
+ */
+const getDivineNamePrefix = (word: Word, schema: Schema): string => {
+  const start = word.text.search(divineNameLetters);
+  if (start <= 0) {
+    return "";
+  }
+
+  const prefix: string[] = [];
+  let length = 0;
+  for (const syl of word.syllables) {
+    if (length + syl.text.length > start) {
+      // the syllable runs into the Divine Name (e.g. the מִיְ of מִיְהוָה),
+      // so only transliterate the part before it
+      const rest = word.text.slice(length, start);
+      if (rest) {
+        prefix.push(sylRules(copySyllable(rest, syl), schema));
+      }
+      break;
+    }
+    prefix.push(sylRules(syl, schema));
+    length += syl.text.length;
+  }
+
+  return prefix.join(schema.SYLLABLE_SEPARATOR ?? "");
 };
 
 const isDageshChazaq = (cluster: Cluster, schema: Schema) => {
@@ -566,7 +603,9 @@ export const wordRules = (word: Word, schema: Schema): string | Word => {
   }
 
   if (word.hasDivineName) {
-    return `${sylRules(word.syllables[0], schema)}-${getDivineName(word.text, schema)}`;
+    const prefix = getDivineNamePrefix(word, schema);
+    const divineName = getDivineName(word.text, schema);
+    return prefix ? `${prefix}-${divineName}` : divineName;
   }
 
   if (word.isNotHebrew) {

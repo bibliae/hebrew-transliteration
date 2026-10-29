@@ -569,3 +569,21 @@ describe("ticket 005: Divine Name keeps attached punctuation", () => {
     expect(transliterate(hebrew, options)).toBe(transliteration);
   });
 });
+
+// tickets/006-divine-name-prefix-loses-syllables.md
+describe("ticket 006: every syllable of a prefix before the Divine Name is kept", () => {
+  test.each`
+    description                             | hebrew            | transliteration | options
+    ${"two-syllable prefix"}                | ${"וְלַיהוָה"}    | ${"wəla-yhwh"}  | ${{}}
+    ${"two-syllable prefix with shureq"}    | ${"וּבַיהוָה"}    | ${"ûba-yhwh"}   | ${{}}
+    ${"prefix before a yod with sheva"}     | ${"וּֽמֵיְהוָ֖ה"} | ${"ûmē-yhwh"}   | ${{}}
+    ${"one-syllable prefix"}                | ${"בַּֽיהוָ֔ה"}   | ${"ba-yhwh"}    | ${{}}
+    ${"syllable that runs into the name"}   | ${"מִיְהוָה"}     | ${"mi-yhwh"}    | ${{}}
+    ${"hiriq in the prefix is not elohim"}  | ${"מִיְהוָה"}     | ${"mi-yhwh"}    | ${{ DIVINE_NAME_ELOHIM: "ELOHIM" }}
+    ${"hiriq in the name is still elohim"}  | ${"לֵיהוִה"}      | ${"lē-ELOHIM"}  | ${{ DIVINE_NAME_ELOHIM: "ELOHIM" }}
+    ${"prefix syllables use the separator"} | ${"וְלַיהוָה"}    | ${"wə.la-yhwh"} | ${{ SYLLABLE_SEPARATOR: "." }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
