@@ -478,7 +478,8 @@ const removeTaamim = (input: string) => input.replace(taamim, "");
  * @param schema the Schema
  */
 const replaceAndTransliterate = (input: string, regex: RegExp, replaceValue: string, schema: Schema) => {
-  const sylSeq = replaceWithRegex(input, regex, replaceValue);
+  // a feature's TRANSLITERATION string keeps String.replace() semantics (e.g. "$1"), as before
+  const sylSeq = input.replace(regex, replaceValue);
   return [...sylSeq].map(mapChars(schema)).join("");
 };
 
@@ -487,9 +488,11 @@ const replaceAndTransliterate = (input: string, regex: RegExp, replaceValue: str
  *
  * @param input the string to be modified
  * @param regex the regex to be used as the search value
- * @param replaceValue the string to replace the regex
+ * @param replaceValue the string to replace the regex, inserted as is:
+ * a schema value such as "$" (Michigan-Claremont's SHIN) must not be read as a replacement pattern like "$$"
  */
-const replaceWithRegex = (input: string, regex: RegExp, replaceValue: string) => input.replace(regex, replaceValue);
+const replaceWithRegex = (input: string, regex: RegExp, replaceValue: string) =>
+  input.replace(regex, () => replaceValue);
 
 /** A HEBREW value made only of Hebrew characters, as opposed to one that uses regex syntax */
 const plainHebrew = /^[\u{0590}-\u{05FF}\u{FB1D}-\u{FB4F}\s]+$/u;
@@ -636,7 +639,7 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
   }
 
   if (cluster.isShureq) {
-    return clusterText.replace("וּ", schema.SHUREQ);
+    return clusterText.replace("וּ", () => schema.SHUREQ);
   }
 
   return clusterText;
@@ -688,22 +691,23 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
   // syllable is 3ms sufx
   const mSSuffix = /\u{05B8}\u{05D9}\u{05D5}/u;
   if (syl.isFinal && mSSuffix.test(sylText)) {
-    const text = joined.replace(schema["QAMATS"] + schema["YOD"] + schema["VAV"], schema.MS_SUFX);
+    const text = joined.replace(schema["QAMATS"] + schema["YOD"] + schema["VAV"], () => schema.MS_SUFX);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.SEGOL_HE && /\u{05B6}\u{05D4}/u.test(sylText)) {
-    const text = joined.replace(schema["SEGOL"] + schema["HE"], schema.SEGOL_HE);
+  const { SEGOL_HE, TSERE_HE, PATAH_HE } = schema;
+  if (SEGOL_HE && /\u{05B6}\u{05D4}/u.test(sylText)) {
+    const text = joined.replace(schema["SEGOL"] + schema["HE"], () => SEGOL_HE);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.TSERE_HE && /\u{05B5}\u{05D4}/u.test(sylText)) {
-    const text = joined.replace(schema["TSERE"] + schema["HE"], schema.TSERE_HE);
+  if (TSERE_HE && /\u{05B5}\u{05D4}/u.test(sylText)) {
+    const text = joined.replace(schema["TSERE"] + schema["HE"], () => TSERE_HE);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.PATAH_HE && /\u{05B7}\u{05D4}/u.test(sylText)) {
-    const text = joined.replace(schema["PATAH"] + schema["HE"], schema.PATAH_HE);
+  if (PATAH_HE && /\u{05B7}\u{05D4}/u.test(sylText)) {
+    const text = joined.replace(schema["PATAH"] + schema["HE"], () => PATAH_HE);
     return addStressMarker(text, syl, schema);
   }
 

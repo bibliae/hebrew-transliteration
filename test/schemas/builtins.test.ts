@@ -78,3 +78,15 @@ describe("ticket 002: built-in schemas don't inherit SBL's default features", ()
     expect(transliterate("קֻ֣ם")).toBe("qūm");
   });
 });
+
+// tickets/027-dollar-in-schema-values.md
+describe("ticket 027: Michigan-Claremont keeps a doubled shin", () => {
+  test.each`
+    hebrew            | transliteration
+    ${"הַשָּׁמַ֖יִם"} | ${"HA$$FMAYIM"}
+    ${"הַשֶּׁ֖מֶשׁ"}  | ${"HA$$EME$"}
+    ${"מִשָּׁם"}      | ${"MI$$FM"}
+  `("$hebrew → $transliteration", ({ hebrew, transliteration }) => {
+    expect(transliterate(hebrew, michiganClaremont)).toBe(transliteration);
+  });
+});

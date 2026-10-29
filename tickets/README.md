@@ -1,6 +1,6 @@
 # Tickets
 
-Issues found in a code review of `src/` at commit `880cc68`. Each bug was reproduced against that commit with havarotjs 0.25.4, and the outputs shown in the tickets are real. None of these cases was covered by the existing tests. Each ticket ends with a Resolution section that describes the fix and names its regression tests.
+Issues found in a code review of `src/` at commit `880cc68`. Ticket 027 was found later, while fixing 008. Each bug was reproduced against that commit with havarotjs 0.25.4, and the outputs shown in the tickets are real. None of these cases was covered by the existing tests. Each ticket ends with a Resolution section that describes the fix and names its regression tests.
 
 The repros assume these imports:
 
@@ -42,6 +42,7 @@ Fix 001 first, then 002. 002 changes how the built-in schemas run and depends on
 | 016 | [Later syllable features ignore earlier pass-through output](016-syllable-features-use-original-text.md) | features |
 | 017 | [Feature `HEBREW` strings don't match normal (NFC) Hebrew](017-feature-hebrew-not-sequenced.md) | features |
 | 020 | [Tiberian "Issachar" rule drops prefixes and suffixes](020-tiberian-issachar-drops-prefix.md) | Tiberian schema |
+| 027 | [A `$` in a schema value is read as a replacement pattern](027-dollar-in-schema-values.md) | rules |
 
 ## Low
 

@@ -959,3 +959,24 @@ describe("ticket 025: the SBL constructor sets each field once", () => {
     expect(sbl.ON_COMPLETE).toBe(onComplete);
   });
 });
+
+// tickets/027-dollar-in-schema-values.md
+describe("ticket 027: schema values are inserted literally", () => {
+  test.each`
+    description       | hebrew            | transliteration | options
+    ${"doubled SHIN"} | ${"הַשָּׁמַ֖יִם"} | ${"ha$$āmayim"} | ${{ SHIN: "$" }}
+    ${"MS_SUFX"}      | ${"דְּבָרָ֖יו"}   | ${"dəbār$&"}    | ${{ MS_SUFX: "$&" }}
+    ${"SEGOL_HE"}     | ${"יִקְרֶ֥ה"}     | ${"yiqr$'"}     | ${{ SEGOL_HE: "$'" }}
+    ${"SHUREQ"}       | ${"קוּם"}         | ${"q$&m"}       | ${{ SHUREQ: "$&" }}
+    ${"HIRIQ_YOD"}    | ${"עִ֔יר"}        | ${"ʿ$&r"}       | ${{ HIRIQ_YOD: "$&" }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+
+  test("a feature's TRANSLITERATION string can still use $1", () => {
+    expect(
+      transliterate("דָּבָר", { ADDITIONAL_FEATURES: [{ FEATURE: "word", HEBREW: /(ד)/u, TRANSLITERATION: "[$1]" }] })
+    ).toBe("[d]ābār");
+  });
+});
