@@ -28,6 +28,16 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
     return text;
   }
 
+  // a word in construct is not stressed on its own
+  if (syl.word?.isInConstruct) {
+    return text;
+  }
+
+  // a syllable that is only punctuation (e.g. a paseq) is not stressed
+  if (syl.clusters.every((c) => c.isPunctuation)) {
+    return text;
+  }
+
   const exclude = schema.STRESS_MARKER?.exclude ?? "never";
 
   if (exclude === "single" && !syl.prev && !syl.next) {

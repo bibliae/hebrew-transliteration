@@ -629,3 +629,18 @@ describe("ticket 009: stress marker treats schema vowels as plain text", () => {
     expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: { location: "after-vowel", mark: "$&" } })).toBe("me$&lek");
   });
 });
+
+// tickets/010-stress-marker-on-construct-and-paseq.md
+describe("ticket 010: no stress marker on construct words or paseq", () => {
+  const stress = { location: "after-syllable", mark: "ˈ" } as const;
+
+  test.each`
+    description                                   | hebrew               | transliteration      | options
+    ${"accented word in construct"}               | ${"בֵּ֣ית־אֵ֔ל"}     | ${"bêt-ʾēlˈ"}        | ${{ STRESS_MARKER: stress }}
+    ${"paseq with a schema value"}                | ${"רַ֛עַל ׀ רַ֛עַל"} | ${"raˈʿal | raˈʿal"} | ${{ PASEQ: "|", STRESS_MARKER: stress }}
+    ${"unaccented word in construct (unchanged)"} | ${"כָּל־הָאָ֖רֶץ"}   | ${"kol-hāʾāˈreṣ"}    | ${{ STRESS_MARKER: stress }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
