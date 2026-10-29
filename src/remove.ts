@@ -256,6 +256,12 @@ export interface RemoveOptions {
    */
   HOLAM?: boolean;
   /**
+   * HEBREW POINT HOLAM HASER FOR VAV (U+05BA)
+   * ◌ֺ
+   * @category Vowels
+   */
+  HOLAM_HASER_FOR_VAV?: boolean;
+  /**
    * HEBREW POINT QUBUTS (U+05BB)
    * ◌ֻ
    * @category Vowels
@@ -445,8 +451,7 @@ const removeMap: map = {
   PATAH: "\u{05B7}", // HEBREW POINT PATAH
   QAMATS: "\u{05B8}", // HEBREW POINT QAMATS
   HOLAM: "\u{05B9}", // HEBREW POINT HOLAM
-  // below is not needed because sequnce() does not output this
-  // HOLAM_HASER_FOR_VAV: "\u{05BA}", // HEBREW POINT HOLAM HASER FOR VAV
+  HOLAM_HASER_FOR_VAV: "\u{05BA}", // HEBREW POINT HOLAM HASER FOR VAV
   QUBUTS: "\u{05BB}", // HEBREW POINT QUBUTS
   DAGESH: "\u{05BC}", // HEBREW POINT DAGESH OR MAPIQ
   METEG: "\u{05BD}", // HEBREW POINT METEG
@@ -515,6 +520,7 @@ export const points: RemoveOptions = {
   PATAH: true,
   QAMATS: true,
   HOLAM: true,
+  HOLAM_HASER_FOR_VAV: true,
   QUBUTS: true,
   DAGESH: true,
   SHIN_DOT: true,
@@ -542,6 +548,7 @@ export const vowels: RemoveOptions = {
   PATAH: true,
   QAMATS: true,
   HOLAM: true,
+  HOLAM_HASER_FOR_VAV: true,
   QUBUTS: true,
   DAGESH: true,
   QAMATS_QATAN: true

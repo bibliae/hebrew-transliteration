@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { remove, sequence } from "../src/index";
-import { accents, all, vowels } from "../src/remove";
+import { accents, all, points, vowels } from "../src/remove";
 
 test("default", () => {
   const test = "שָׂרַ֣י אִשְׁתְּךָ֔, וַֽיִּמְצְא֗וּ";
@@ -83,5 +83,26 @@ describe("ON_COMPLETE callback", () => {
         ON_COMPLETE: (result) => result
       })
     ).toBe("שׂרי");
+  });
+});
+
+// tickets/014-remove-leaves-holam-haser-for-vav.md
+describe("ticket 014: holam haser for vav (U+05BA) can be removed", () => {
+  const holamHaser = "\u{05BA}";
+
+  test.each([
+    ["all", all],
+    ["points", points],
+    ["vowels", vowels]
+  ])("the %s preset removes it", (_name, options) => {
+    expect(remove("עָוֺן", options)).not.toContain(holamHaser);
+  });
+
+  test("it can be removed on its own", () => {
+    expect(remove("עָוֺן", { HOLAM_HASER_FOR_VAV: true })).toBe(sequence("עָון"));
+  });
+
+  test("it is kept when not asked for", () => {
+    expect(remove("עָוֺן", { HOLAM: true })).toContain(holamHaser);
   });
 });
