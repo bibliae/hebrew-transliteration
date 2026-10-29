@@ -644,3 +644,19 @@ describe("ticket 010: no stress marker on construct words or paseq", () => {
     expect(transliterate(hebrew, options)).toBe(transliteration);
   });
 });
+
+// tickets/011-stress-marker-missing-on-long-vowels.md
+describe("ticket 011: stress marker on SBL's long ī and ū", () => {
+  const afterVowel = { STRESS_MARKER: { location: "after-vowel", mark: "́" } } as const;
+
+  test.each`
+    description              | hebrew                | transliteration   | options
+    ${"long qubuts"}         | ${"קֻ֣ם"}             | ${"qū́m"}          | ${afterVowel}
+    ${"long hiriq"}          | ${"דָּוִ֑ד"}          | ${"dāwī́d"}        | ${afterVowel}
+    ${"second word in text"} | ${"יִשְׂרָאֵ֣ל אִ֣ם"} | ${"yiśrāʾḗl ʾī́m"} | ${afterVowel}
+    ${"non-combining mark"}  | ${"מִ֣ן"}             | ${"mī'n"}         | ${{ STRESS_MARKER: { location: "after-vowel", mark: "'" } }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options).normalize("NFC")).toBe(transliteration.normalize("NFC"));
+  });
+});

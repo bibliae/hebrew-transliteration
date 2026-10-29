@@ -98,7 +98,10 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
     schema.TSERE_YOD,
     schema.SEGOL_YOD,
     schema.HOLAM_VAV,
-    schema.SHUREQ
+    schema.SHUREQ,
+    // a hiriq or qubuts marked as long by a feature (e.g. SBL's defectiveLongVowels outputs ī and ū)
+    withMacron(schema.HIRIQ),
+    withMacron(schema.QUBUTS)
   ]
     // an empty vowel would match at the start of every syllable
     .filter((v): v is string => typeof v === "string" && v.length > 0)
@@ -117,6 +120,9 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
   const index = location === "before-vowel" ? match.index : match.index + match[0].length;
   return text.slice(0, index) + mark + text.slice(index);
 };
+
+/** Adds a macron to a vowel, composing it where possible (e.g. "i" → "ī") */
+const withMacron = (vowel: string | undefined) => (vowel ? (vowel + "\u{0304}").normalize("NFC") : vowel);
 
 /** Escapes a string so that it matches itself literally when used in a RegExp */
 const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
