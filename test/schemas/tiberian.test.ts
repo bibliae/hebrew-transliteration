@@ -596,3 +596,20 @@ describe("ticket 004: Pe with Dagesh rule only matches a pe with a dagesh", () =
     expect(transliterate(hebrew, schema)).toBe(transliteration);
   });
 });
+
+// tickets/007-tiberian-construct-gemination-mid-word.md
+describe("ticket 007: construct doubling only applies to the first letter of the word", () => {
+  test.each`
+    description                              | hebrew               | transliteration
+    ${"pe after a silent sheva"}             | ${"מִֽי־יִשְׁפֹּ֖ט"} | ${"ˌmiˑ-jiʃˈpʰoːotˁ"}
+    ${"tav after a silent sheva"}            | ${"מִי־יִשְׁתֶּה"}   | ${"miː-jiʃˈtʰɛː"}
+    ${"kaf after a closed syllable"}         | ${"מִי־מַלְכָּה"}    | ${"miː-malˈkʰɔː"}
+    ${"tet after a silent sheva"}            | ${"לְכָה־מִשְׁטָּר"} | ${"laχɔː-miʃˈtˁɔːɔrˁ"}
+    ${"word-initial tav is still doubled"}   | ${"מִי־תָּבוֹא"}     | ${"miː-ttʰɔːˈvoː"}
+    ${"word-initial tsadi is still doubled"} | ${"מִי־צָּרָה"}      | ${"miː-ssˁɔːˈʀ̟ɔː"}
+    ${"word-initial kaf is still doubled"}   | ${"מַה־כֹּ֣ה"}       | ${"mah-kˈkʰoː"}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, schema)).toBe(transliteration);
+  });
+});

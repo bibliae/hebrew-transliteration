@@ -90,17 +90,15 @@ export const tiberian: Schema = {
         const secondChar = "ʰ";
         const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
 
-        // if there is a dagesh, and the previous word is in construct and does not end in a closed syllable,
-        // then it is a word initial dagesh chazaq and we need to replace the first character of the digraph
-        const prevWord = cluster.syllable?.word?.prev?.value;
-        if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-          return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-        }
-
-        // if there is a dagesh at the beginning of the word
-        // we can return the text, as the character with the dagesh will not be doubled
+        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
+        // Otherwise, the character with the dagesh will not be doubled
         // oxlint-disable-next-line typescript/prefer-optional-chain
         if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+          const prevWord = cluster.syllable?.word?.prev?.value;
+          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
+          }
           return cluster.text;
         }
 
@@ -131,13 +129,15 @@ export const tiberian: Schema = {
         const secondChar = "ʰ";
         const noAspiration = digraph?.replace(secondChar, "") ?? "";
 
-        const prevWord = cluster.syllable?.word?.prev?.value;
-        if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-          return cluster.text.replace(heb, `${noAspiration + digraph}`);
-        }
-
+        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
+        // Otherwise, the character with the dagesh will not be doubled
         // oxlint-disable-next-line typescript/prefer-optional-chain
         if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+          const prevWord = cluster.syllable?.word?.prev?.value;
+          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+            return cluster.text.replace(heb, `${noAspiration + digraph}`);
+          }
           return cluster.text;
         }
 
@@ -162,13 +162,15 @@ export const tiberian: Schema = {
         const secondChar = "ʰ";
         const noAspiration = digraph?.replace(secondChar, "") ?? "";
 
-        const prevWord = cluster.syllable?.word?.prev?.value;
-        if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-          return cluster.text.replace(heb, `${noAspiration + digraph}`);
-        }
-
+        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
+        // Otherwise, the character with the dagesh will not be doubled
         // oxlint-disable-next-line typescript/prefer-optional-chain
         if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+          const prevWord = cluster.syllable?.word?.prev?.value;
+          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+            return cluster.text.replace(heb, `${noAspiration + digraph}`);
+          }
           return cluster.text;
         }
 
@@ -195,13 +197,15 @@ export const tiberian: Schema = {
         const secondChar = "ˁ";
         const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
 
-        const prevWord = cluster.syllable?.word?.prev?.value;
-        if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-          return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-        }
-
+        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
+        // Otherwise, the character with the dagesh will not be doubled
         // oxlint-disable-next-line typescript/prefer-optional-chain
         if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+          const prevWord = cluster.syllable?.word?.prev?.value;
+          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
+          }
           return cluster.text;
         }
 
@@ -227,13 +231,15 @@ export const tiberian: Schema = {
         const secondChar = "ˁ";
         const noSecondCharacter = digraph?.replace(secondChar, "") ?? "";
 
-        const prevWord = cluster.syllable?.word?.prev?.value;
-        if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
-          return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
-        }
-
+        // a dagesh at the beginning of the word is only doubled (a dagesh chazaq) when the previous word
+        // is in construct and does not end in a closed syllable; then we need to replace the first character of the digraph.
+        // Otherwise, the character with the dagesh will not be doubled
         // oxlint-disable-next-line typescript/prefer-optional-chain
         if (!cluster.prev || cluster.prev.value?.isNotHebrew) {
+          const prevWord = cluster.syllable?.word?.prev?.value;
+          if (prevWord?.isInConstruct && !prevWord.syllables.at(-1)?.isClosed) {
+            return cluster.text.replace(heb, `${noSecondCharacter + digraph}`);
+          }
           return cluster.text;
         }
 
