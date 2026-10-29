@@ -53,6 +53,10 @@ export interface HebrewFeature {
    * @remarks
    * The text is parsed as a Regex so special characters like `?` and `|` can be used
    *
+   * The text being matched has been sequenced by havarotjs: each consonant is followed by its shin/sin dot,
+   * then dagesh, then vowel (and a holam male comes before its vav).
+   * A string made only of Hebrew characters is put in that order for you, so it can be typed in any order (e.g. NFC).
+   * A RegExp, or a string that uses regex syntax, is used as written, so it must already be in that order.
    */
   HEBREW: string | RegExp;
 }

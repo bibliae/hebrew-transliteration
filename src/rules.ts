@@ -1,8 +1,10 @@
 import { Cluster } from "havarotjs/cluster";
 import { Syllable } from "havarotjs/syllable";
+import { holemWaw } from "havarotjs/utils/holemWaw";
 import { clusterSplitGroup } from "havarotjs/utils/regularExpressions";
 import { Word } from "havarotjs/word";
 import type { Schema } from "./schema.js";
+import { sequenceMarks } from "./sequence.js";
 
 const taamim = /[\u{0591}-\u{05AF}\u{05BD}\u{05BF}]/gu;
 const hebLetter = /[\u{05D0}-\u{05F2}]/u;
@@ -487,6 +489,23 @@ const replaceAndTransliterate = (input: string, regex: RegExp, replaceValue: str
  */
 const replaceWithRegex = (input: string, regex: RegExp, replaceValue: string) => input.replace(regex, replaceValue);
 
+/** A HEBREW value made only of Hebrew characters, as opposed to one that uses regex syntax */
+const plainHebrew = /^[\u{0590}-\u{05FF}\u{FB1D}-\u{FB4F}\s]+$/u;
+
+/**
+ * Puts a feature's plain Hebrew string in the same character order as the text it is matched against.
+ * havarotjs has already sequenced that text (e.g. dagesh before vowel, and a holam male before its vav),
+ * so a string typed in another order (e.g. NFC) would never match.
+ *
+ * @returns the sequenced string, or the HEBREW value unchanged if it is a RegExp or uses regex syntax
+ */
+const sequenceFeatureHebrew = (hebrew: string | RegExp, schema: Schema): string | RegExp => {
+  if (typeof hebrew !== "string" || !plainHebrew.test(hebrew)) {
+    return hebrew;
+  }
+  return holemWaw(sequenceMarks(hebrew), schema);
+};
+
 // MAIN RULES
 
 const cluterRules = (cluster: Cluster, schema: Schema) => {
@@ -494,7 +513,8 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
   const clusterFeatures = schema.ADDITIONAL_FEATURES?.filter((seq) => seq.FEATURE === "cluster");
   if (clusterFeatures) {
     for (const feature of clusterFeatures) {
-      const heb = new RegExp(feature.HEBREW, "u");
+      const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
+      const heb = new RegExp(hebrew, "u");
       if (feature.FEATURE === "cluster" && heb.test(clusterText)) {
         const transliteration = feature.TRANSLITERATION;
         const passThrough = feature.PASS_THROUGH ?? true;
@@ -504,10 +524,10 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
         }
 
         if (!passThrough) {
-          return transliteration(cluster, feature.HEBREW, schema);
+          return transliteration(cluster, hebrew, schema);
         }
 
-        clusterText = transliteration(cluster, feature.HEBREW, schema);
+        clusterText = transliteration(cluster, hebrew, schema);
       }
     }
   }
@@ -600,7 +620,8 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
   const syllableFeatures = schema.ADDITIONAL_FEATURES?.filter((seq) => seq.FEATURE === "syllable");
   if (syllableFeatures) {
     for (const feature of syllableFeatures) {
-      const heb = new RegExp(feature.HEBREW, "u");
+      const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
+      const heb = new RegExp(hebrew, "u");
       if (feature.FEATURE === "syllable" && heb.test(baseSyllableText)) {
         const transliteration = feature.TRANSLITERATION;
         const passThrough = feature.PASS_THROUGH ?? true;
@@ -610,10 +631,10 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
         }
 
         if (!passThrough) {
-          return transliteration(syl, feature.HEBREW, schema);
+          return transliteration(syl, hebrew, schema);
         }
 
-        const newText = transliteration(syl, feature.HEBREW, schema);
+        const newText = transliteration(syl, hebrew, schema);
 
         // if the transliteration just returns the syllable.text, then no need to copy the syllable
         if (newText !== baseSyllableText) {
@@ -682,11 +703,12 @@ export const wordRules = (word: Word, schema: Schema): string | Word => {
     return word;
   }
 
-  // like cluster and syllable features, each pass-through feature works on the result of the previous one
+  // like cluster features, each pass-through feature is matched against, and receives, the result of the previous one
   let current = word;
   for (const feature of wordFeatures) {
     const text = current.text.replace(taamim, "");
-    const heb = new RegExp(feature.HEBREW, "u");
+    const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
+    const heb = new RegExp(hebrew, "u");
     if (!heb.test(text)) {
       continue;
     }
@@ -699,10 +721,10 @@ export const wordRules = (word: Word, schema: Schema): string | Word => {
     }
 
     if (!passThrough) {
-      return transliteration(current, feature.HEBREW, schema);
+      return transliteration(current, hebrew, schema);
     }
 
-    const newText = transliteration(current, feature.HEBREW, schema);
+    const newText = transliteration(current, hebrew, schema);
     // only rebuild the word if the feature changed it
     if (newText !== current.text && newText !== text) {
       current = copyWord(newText, current, schema);

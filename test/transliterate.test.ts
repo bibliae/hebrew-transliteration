@@ -766,3 +766,48 @@ describe("ticket 016: rules after syllable features see the features' output", (
     expect(result).toBe("bāXār");
   });
 });
+
+// tickets/017-feature-hebrew-not-sequenced.md
+describe("ticket 017: feature HEBREW strings match no matter how they are typed", () => {
+  // NFC puts a vowel before a dagesh (and a sheva before a shin dot), unlike the text havarotjs builds
+  const nfc = (str: string) => str.normalize("NFC");
+
+  test.each`
+    description                             | hebrew         | feature                                                                  | transliteration
+    ${"word feature, NFC"}                  | ${"דָּבָר"}    | ${{ FEATURE: "word", HEBREW: nfc("דָּבָר"), TRANSLITERATION: "DAVAR" }}  | ${"DAVAR"}
+    ${"word feature, NFC, with a shin dot"} | ${"שְׁתַּיִם"} | ${{ FEATURE: "word", HEBREW: nfc("שְׁתַּיִם"), TRANSLITERATION: "TWO" }} | ${"TWO"}
+    ${"cluster feature, NFC"}               | ${"בָּא"}      | ${{ FEATURE: "cluster", HEBREW: nfc("בָּ"), TRANSLITERATION: "BA" }}     | ${"BAʾ"}
+    ${"syllable feature, NFC"}              | ${"בָּרָא"}    | ${{ FEATURE: "syllable", HEBREW: nfc("בָּ"), TRANSLITERATION: "BA" }}    | ${"BArāʾ"}
+    ${"word feature with a holam male"}     | ${"שָׁלוֹם"}   | ${{ FEATURE: "word", HEBREW: "שָׁלוֹם", TRANSLITERATION: "SHALOM" }}     | ${"SHALOM"}
+  `("$description", ({ hebrew, feature, transliteration }) => {
+    expect(transliterate(hebrew, { ADDITIONAL_FEATURES: [feature] })).toBe(transliteration);
+  });
+
+  test("a callback receives the sequenced string, so it can use it to replace text", () => {
+    expect(
+      transliterate("בָּא", {
+        ADDITIONAL_FEATURES: [
+          {
+            FEATURE: "cluster",
+            HEBREW: nfc("בָּ"),
+            TRANSLITERATION: (cluster, hebrew) => cluster.text.replace(hebrew, "BA")
+          }
+        ]
+      })
+    ).toBe("BAʾ");
+  });
+
+  test("a string with regex syntax is used as written", () => {
+    expect(
+      transliterate("בְּרֵאשִׁ֖ית", {
+        ADDITIONAL_FEATURES: [
+          {
+            FEATURE: "syllable",
+            HEBREW: "(?<![\u{05B1}-\u{05BB}\u{05C7}].*)\u{05B0}",
+            TRANSLITERATION: (syllable) => syllable.text.replace(/\u{05B0}/u, "\u{05B5}")
+          }
+        ]
+      })
+    ).toBe("bērēʾšît");
+  });
+});
