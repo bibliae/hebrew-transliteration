@@ -1,7 +1,7 @@
 import { Text } from "havarotjs";
 import type { SylOpts } from "havarotjs/text";
 import { Word } from "havarotjs/word";
-import { sylRules, wordRules } from "./rules.js";
+import { startsWithDoubledConsonant, sylRules, wordRules } from "./rules.js";
 import { Schema } from "./schema.js";
 import { SBL } from "./schemas/index.js";
 
@@ -86,7 +86,9 @@ export const transliterate = (text: string | Text, schema?: Partial<Schema> | Sc
         return `${transliteration}${word.whiteSpaceAfter ?? ""}`;
       }
 
-      const syllableTransliteration = transliteration.syllables
+      // read the syllables once; havarotjs builds new ones each time
+      const syllables = transliteration.syllables;
+      const syllableTransliteration = syllables
         .map((s) => sylRules(s, transSchema))
         .reduce((a, c, i) => {
           if (!i) {
@@ -97,7 +99,8 @@ export const transliterate = (text: string | Text, schema?: Partial<Schema> | Sc
             return a + c;
           }
 
-          if (c.includes(transSchema.SYLLABLE_SEPARATOR)) {
+          // a doubled consonant already has the separator between its two halves
+          if (startsWithDoubledConsonant(syllables[i], transSchema)) {
             return a + c;
           }
 

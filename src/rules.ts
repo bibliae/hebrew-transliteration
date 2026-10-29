@@ -62,9 +62,8 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
   if (location === "before-syllable") {
     // a doubled consonant is split between the previous syllable and this one (e.g. hak-ˈkol),
     // so the mark goes before the second half, where the consonant's own value starts again
-    const onset = syl.clusters[0];
-    if (onset && typeof schema.DAGESH_CHAZAQ === "boolean" && isDageshChazaq(onset, schema)) {
-      const consonant = getConsonantValue(onset, schema);
+    if (startsWithDoubledConsonant(syl, schema)) {
+      const consonant = getConsonantValue(syl.clusters[0], schema);
       const index = consonant ? text.indexOf(consonant, 1) : -1;
       if (index > 0) {
         return `${text.slice(0, index)}${mark}${text.slice(index)}`;
@@ -278,6 +277,15 @@ const getDivineNamePrefix = (word: Word, schema: Schema): string => {
   }
 
   return prefix.join(schema.SYLLABLE_SEPARATOR ?? "");
+};
+
+/**
+ * Checks if a syllable starts with a doubled consonant (a dagesh chazaq with `DAGESH_CHAZAQ: true`).
+ * Such a consonant is written twice, with the syllable separator between the two halves (e.g. haq-qiṭ-ṭēr)
+ */
+export const startsWithDoubledConsonant = (syl: Syllable, schema: Schema): boolean => {
+  const onset = syl.clusters[0];
+  return typeof schema.DAGESH_CHAZAQ === "boolean" && !!onset && isDageshChazaq(onset, schema);
 };
 
 const isDageshChazaq = (cluster: Cluster, schema: Schema) => {

@@ -834,3 +834,18 @@ describe("ticket 018: stress marker when a letter maps to the mark character", (
     ).toBe("dābārˈ");
   });
 });
+
+// tickets/019-separator-skipped-when-maqaf-matches.md
+describe("ticket 019: syllable separator when the output already contains the separator character", () => {
+  test.each`
+    description                                     | hebrew             | transliteration       | options
+    ${"MAQAF is the same as the separator"}         | ${"וְכָל־הָאָרֶץ"} | ${"wə-kol-hā-ʾā-reṣ"} | ${{ SYLLABLE_SEPARATOR: "-" }}
+    ${"control: a different MAQAF"}                 | ${"וְכָל־הָאָרֶץ"} | ${"wə-kol=hā-ʾā-reṣ"} | ${{ SYLLABLE_SEPARATOR: "-", MAQAF: "=" }}
+    ${"feature output contains the separator"}      | ${"בְּרֵאשִׁית"}   | ${"bə-R-A-šît"}       | ${{ SYLLABLE_SEPARATOR: "-", ADDITIONAL_FEATURES: [{ FEATURE: "syllable", HEBREW: "רֵא", TRANSLITERATION: "R-A" }] }}
+    ${"doubled consonant still gets one separator"} | ${"שַׁבָּת"}       | ${"šab-bāt"}          | ${{ SYLLABLE_SEPARATOR: "-" }}
+    ${"dagesh chazaq as a mark is not doubled"}     | ${"שַׁבָּת"}       | ${"ša-b́āt"}           | ${{ SYLLABLE_SEPARATOR: "-", DAGESH_CHAZAQ: "́" }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
