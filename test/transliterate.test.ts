@@ -880,3 +880,33 @@ describe("ticket 022: a maqaf after a mater is kept (the removed maqaf workaroun
     expect(transliterate(hebrew, { MAQAF: "=" })).toBe(maqaf);
   });
 });
+
+// tickets/023-regexps-rebuilt-per-call.md
+describe("ticket 023: cached feature and vowel RegExps stay up to date", () => {
+  test("changing a feature's HEBREW between calls takes effect", () => {
+    const feature: { FEATURE: "word"; HEBREW: string; TRANSLITERATION: string } = {
+      FEATURE: "word",
+      HEBREW: "דָּבָר",
+      TRANSLITERATION: "DAVAR"
+    };
+    const schema = { ADDITIONAL_FEATURES: [feature] };
+    expect(transliterate("דָּבָר שָׁלוֹם", schema)).toBe("DAVAR šālôm");
+    feature.HEBREW = "שָׁלוֹם";
+    expect(transliterate("דָּבָר שָׁלוֹם", schema)).toBe("dābār DAVAR");
+  });
+
+  test("the same feature works with schemas that sequence differently", () => {
+    // with "update", the holam on the vav becomes U+05BA in both the text and the feature; with "preserve", in neither
+    const feature = { FEATURE: "word", HEBREW: "עָוֹן", TRANSLITERATION: "AVON" } as const;
+    expect(transliterate("עָוֹן", { holemHaser: "update", ADDITIONAL_FEATURES: [feature] })).toBe("AVON");
+    expect(transliterate("עָוֹן", { holemHaser: "preserve", ADDITIONAL_FEATURES: [feature] })).toBe("AVON");
+    expect(transliterate("עָוֹן", { holemHaser: "update", ADDITIONAL_FEATURES: [feature] })).toBe("AVON");
+  });
+
+  test("stress marker vowels follow each schema", () => {
+    const stress = { location: "after-vowel", mark: "'" } as const;
+    expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: stress })).toBe("me'lek");
+    expect(transliterate("מֶ֣לֶךְ", { SEGOL: "E", STRESS_MARKER: stress })).toBe("mE'lEk");
+    expect(transliterate("מֶ֣לֶךְ", { STRESS_MARKER: stress })).toBe("me'lek");
+  });
+});

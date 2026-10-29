@@ -3,7 +3,7 @@ import { Syllable } from "havarotjs/syllable";
 import { holemWaw } from "havarotjs/utils/holemWaw";
 import { clusterSplitGroup } from "havarotjs/utils/regularExpressions";
 import { Word } from "havarotjs/word";
-import type { Schema } from "./schema.js";
+import type { HebrewFeature, Schema } from "./schema.js";
 import { sequenceMarks } from "./sequence.js";
 
 const taamim = /[\u{0591}-\u{05AF}\u{05BD}\u{05BF}]/gu;
@@ -110,7 +110,7 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
   }
 
   // schema values are plain text, so escape any regex syntax in them (e.g. the "." in "W.")
-  const vowelRgx = new RegExp(vowels.map(escapeRegExp).join("|"), "u");
+  const vowelRgx = cachedRegExp(vowels.map(escapeRegExp).join("|"));
   const match = vowelRgx.exec(text);
   if (!match) {
     return text;
@@ -158,6 +158,22 @@ const getConsonantValue = (cluster: Cluster, schema: Schema): string => {
 
 /** Adds a macron to a vowel, composing it where possible (e.g. "i" → "ī") */
 const withMacron = (vowel: string | undefined) => (vowel ? (vowel + "\u{0304}").normalize("NFC") : vowel);
+
+const regExpCache = new Map<string, RegExp>();
+
+/** Gets a RegExp (with the "u" flag) for a pattern, building it only once */
+const cachedRegExp = (pattern: string): RegExp => {
+  let regex = regExpCache.get(pattern);
+  if (!regex) {
+    // a schema's vowel pattern rarely changes, but don't let the cache grow without bound
+    if (regExpCache.size > 100) {
+      regExpCache.clear();
+    }
+    regex = new RegExp(pattern, "u");
+    regExpCache.set(pattern, regex);
+  }
+  return regex;
+};
 
 /** Escapes a string so that it matches itself literally when used in a RegExp */
 const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -491,6 +507,34 @@ const sequenceFeatureHebrew = (hebrew: string | RegExp, schema: Schema): string 
   return holemWaw(sequenceMarks(hebrew), schema);
 };
 
+interface CompiledFeature {
+  /** the feature's HEBREW value when it was compiled */
+  source: string | RegExp;
+  /** the schema's holemHaser when it was compiled, since sequencing depends on it */
+  holemHaser: Schema["holemHaser"];
+  /** the HEBREW value as passed to callbacks (sequenced, if it is a plain Hebrew string) */
+  hebrew: string | RegExp;
+  regex: RegExp;
+}
+
+const compiledFeatures = new WeakMap<HebrewFeature, CompiledFeature>();
+
+/**
+ * Gets a feature's sequenced HEBREW value and its RegExp, building them only once per feature
+ * (they are rebuilt if the feature's HEBREW or the schema's holemHaser changes)
+ */
+const compileFeature = (feature: HebrewFeature, schema: Schema): CompiledFeature => {
+  const cached = compiledFeatures.get(feature);
+  if (cached && cached.source === feature.HEBREW && cached.holemHaser === schema.holemHaser) {
+    return cached;
+  }
+
+  const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
+  const compiled = { source: feature.HEBREW, holemHaser: schema.holemHaser, hebrew, regex: new RegExp(hebrew, "u") };
+  compiledFeatures.set(feature, compiled);
+  return compiled;
+};
+
 // MAIN RULES
 
 const cluterRules = (cluster: Cluster, schema: Schema) => {
@@ -498,8 +542,7 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
   const clusterFeatures = schema.ADDITIONAL_FEATURES?.filter((seq) => seq.FEATURE === "cluster");
   if (clusterFeatures) {
     for (const feature of clusterFeatures) {
-      const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
-      const heb = new RegExp(hebrew, "u");
+      const { hebrew, regex: heb } = compileFeature(feature, schema);
       if (feature.FEATURE === "cluster" && heb.test(clusterText)) {
         const transliteration = feature.TRANSLITERATION;
         const passThrough = feature.PASS_THROUGH ?? true;
@@ -587,8 +630,8 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
 
   if (isDageshChazq) {
     const consonant = cluster.chars[0].text;
-    const consonantDagesh = new RegExp(consonant + "\u{05BC}", "u");
-    return replaceWithRegex(clusterText, consonantDagesh, getDageshChazaqVal(consonant, schema, isDageshChazq));
+    const doubled = getDageshChazaqVal(consonant, schema, isDageshChazq);
+    return clusterText.replace(consonant + "\u{05BC}", () => doubled);
   }
 
   if (cluster.isShureq) {
@@ -605,8 +648,7 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
   const syllableFeatures = schema.ADDITIONAL_FEATURES?.filter((seq) => seq.FEATURE === "syllable");
   if (syllableFeatures) {
     for (const feature of syllableFeatures) {
-      const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
-      const heb = new RegExp(hebrew, "u");
+      const { hebrew, regex: heb } = compileFeature(feature, schema);
       if (feature.FEATURE === "syllable" && heb.test(baseSyllableText)) {
         const transliteration = feature.TRANSLITERATION;
         const passThrough = feature.PASS_THROUGH ?? true;
@@ -692,8 +734,7 @@ export const wordRules = (word: Word, schema: Schema): string | Word => {
   let current = word;
   for (const feature of wordFeatures) {
     const text = current.text.replace(taamim, "");
-    const hebrew = sequenceFeatureHebrew(feature.HEBREW, schema);
-    const heb = new RegExp(hebrew, "u");
+    const { hebrew, regex: heb } = compileFeature(feature, schema);
     if (!heb.test(text)) {
       continue;
     }
