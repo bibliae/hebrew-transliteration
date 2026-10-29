@@ -1,10 +1,13 @@
 import { Cluster } from "havarotjs/cluster";
 import { Syllable } from "havarotjs/syllable";
-import { clusterSplitGroup, hebChars } from "havarotjs/utils/regularExpressions";
+import { clusterSplitGroup } from "havarotjs/utils/regularExpressions";
 import { Word } from "havarotjs/word";
 import type { Schema } from "./schema.js";
 
 const taamim = /[\u{0591}-\u{05AF}\u{05BD}\u{05BF}]/gu;
+const hebLetter = /[\u{05D0}-\u{05F2}]/u;
+/** points and accents that attach to a letter, as opposed to punctuation such as maqaf, paseq, or sof pasuq */
+const letterMarks = /[\u{0591}-\u{05BD}\u{05BF}\u{05C1}\u{05C2}\u{05C4}\u{05C5}\u{05C7}]/gu;
 
 /**
  * Adds a stress marker to a syllable according to the schema settings
@@ -155,12 +158,28 @@ const getDageshChazaqVal = (input: string, schema: Schema, isChazaq: boolean) =>
  * @returns the Divine Name with any pre or proceding Latin chars
  */
 const getDivineName = (str: string, schema: Schema): string => {
-  const begn = str[0];
-  const end = str[str.length - 1];
   // if DN is pointed with a hiriq, then it is read as 'elohim
   const divineName =
     schema.DIVINE_NAME_ELOHIM && /\u{05B4}/u.test(str) ? schema.DIVINE_NAME_ELOHIM : schema.DIVINE_NAME;
-  return `${hebChars.test(begn) ? "" : begn}${divineName}${hebChars.test(end) ? "" : end}`;
+
+  const chars = [...str];
+  const first = chars.findIndex((char) => hebLetter.test(char));
+  if (first === -1) {
+    return divineName;
+  }
+  let last = chars.length - 1;
+  while (!hebLetter.test(chars[last])) {
+    last--;
+  }
+
+  // keep whatever surrounds the Divine Name (e.g. parentheses, a maqaf, or a sof pasuq),
+  // but not the points and accents that belong to its letters
+  const before = chars.slice(0, first).join("");
+  const after = chars
+    .slice(last + 1)
+    .join("")
+    .replace(letterMarks, "");
+  return `${mapChars(schema)(before)}${divineName}${mapChars(schema)(after)}`;
 };
 
 const isDageshChazaq = (cluster: Cluster, schema: Schema) => {

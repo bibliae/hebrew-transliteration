@@ -551,3 +551,21 @@ describe("ticket 003: euphonic dagesh only after an open syllable, and only on t
     expect(transliterate("עַל־פְּנֵי", brillAcademic)).toBe("ʿal-pᵉnê");
   });
 });
+
+// tickets/005-divine-name-drops-punctuation.md
+describe("ticket 005: Divine Name keeps attached punctuation", () => {
+  test.each`
+    description                             | hebrew                  | transliteration     | options
+    ${"sof pasuq"}                          | ${"נְאֻם יְהוָה׃"}      | ${"nəʾūm yhwh."}    | ${{ SOF_PASUQ: "." }}
+    ${"sof pasuq, default schema"}          | ${"נְאֻם יְהוָה׃"}      | ${"nəʾūm yhwh"}     | ${{}}
+    ${"maqaf"}                              | ${"יְהוָה־צְבָאוֹת"}    | ${"yhwh-ṣəbāʾôt"}   | ${{}}
+    ${"sof pasuq with a prefix"}            | ${"לַיהוָה׃"}           | ${"la-yhwh."}       | ${{ SOF_PASUQ: "." }}
+    ${"sof pasuq, read as elohim"}          | ${"יְהוִֽה׃"}           | ${"ʾelōhim."}       | ${{ SOF_PASUQ: ".", DIVINE_NAME_ELOHIM: "ʾelōhim" }}
+    ${"accent on the last letter"}          | ${"יְהוָה֙"}            | ${"yhwh"}           | ${{}}
+    ${"non-Hebrew characters on each side"} | ${"(יְהוָה),"}          | ${"(yhwh),"}        | ${{}}
+    ${"paseq after the Divine Name"}        | ${"יְהוָ֥ה ׀ אֱלֹהִים"} | ${"yhwh | ʾĕlōhîm"} | ${{ PASEQ: "|" }}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
