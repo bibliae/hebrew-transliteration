@@ -580,3 +580,19 @@ describe("verse transliteration report", () => {
     }
   });
 });
+
+// tickets/004-tiberian-pe-rule-matches-every-pe.md
+describe("ticket 004: Pe with Dagesh rule only matches a pe with a dagesh", () => {
+  test.each`
+    description                                         | hebrew              | transliteration
+    ${"fricative pe after a construct word (Song 7:7)"} | ${"מַה־יָּפִ֤ית"}   | ${"mah-ɟɟɔːˈfiːiθ"}
+    ${"fricative pe, same word on its own"}             | ${"יָּפִ֤ית"}       | ${"ɟɟɔːˈfiːiθ"}
+    ${"pe with dagesh after a construct word"}          | ${"עַל־פְּנֵ֣י"}    | ${"ʕal-pʰaˈneː"}
+    ${"pe with dagesh lene after a silent sheva"}       | ${"בַּמִּשְׁפָּ֑ט"} | ${"bammiʃˈpʰɔːɔtˁ"}
+    ${"doubled pe in the middle of a word"}             | ${"אַפִּ֔י"}        | ${"ʔapˈpʰiː"}
+    ${"fricative pe in the middle of a word"}           | ${"תְּפִלָּ֣ה"}     | ${"tʰafilˈlɔː"}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration } = inputs;
+    expect(transliterate(hebrew, schema)).toBe(transliteration);
+  });
+});

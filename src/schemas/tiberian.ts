@@ -123,7 +123,7 @@ export const tiberian: Schema = {
       TITLE: "Pe with Dagesh",
       DESCRIPTION: "The schema value is a digraph which needs to be handled differently depending on context.",
       FEATURE: "cluster",
-      HEBREW: /פ/u,
+      HEBREW: /פּ/u,
       TRANSLITERATION: (cluster, heb, schema) => {
         //  /ת(?!\u{05b0})/u rule for explanation
 
