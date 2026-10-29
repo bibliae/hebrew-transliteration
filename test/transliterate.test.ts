@@ -811,3 +811,26 @@ describe("ticket 017: feature HEBREW strings match no matter how they are typed"
     ).toBe("bērēʾšît");
   });
 });
+
+// tickets/018-stress-marker-skipped-if-mark-in-output.md
+describe("ticket 018: stress marker when a letter maps to the mark character", () => {
+  test.each`
+    description                               | transliteration | options
+    ${"after-vowel"}                          | ${"'ā'dām"}     | ${{ ALEF: "'", STRESS_MARKER: { location: "after-vowel", mark: "'" } }}
+    ${"before-syllable"}                      | ${"''ādām"}     | ${{ ALEF: "'", STRESS_MARKER: { location: "before-syllable", mark: "'" } }}
+    ${"control: alef maps to something else"} | ${"ʾā'dām"}     | ${{ STRESS_MARKER: { location: "after-vowel", mark: "'" } }}
+  `("$description: אָ֣דָם → $transliteration", ({ transliteration, options }) => {
+    expect(transliterate("אָ֣דָם", options)).toBe(transliteration);
+  });
+
+  test("a mark already added by a feature is not added again", () => {
+    expect(
+      transliterate("דָּבָ֑ר", {
+        STRESS_MARKER: { location: "after-syllable", mark: "ˈ" },
+        ADDITIONAL_FEATURES: [
+          { FEATURE: "syllable", HEBREW: "ר", TRANSLITERATION: (syllable) => syllable.text.replace("ר", "רˈ") }
+        ]
+      })
+    ).toBe("dābārˈ");
+  });
+});

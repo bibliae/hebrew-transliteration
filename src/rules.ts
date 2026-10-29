@@ -53,8 +53,9 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
   const location = schema.STRESS_MARKER.location;
   const mark = schema.STRESS_MARKER.mark;
 
-  // if the stress marker is already present, no need to add it again
-  if (text.includes(mark)) {
+  // if a feature has already added the stress marker, no need to add it again;
+  // check the Hebrew, since a letter's transliteration may be the same character as the mark (e.g. ALEF: "'")
+  if (syl.text.includes(mark)) {
     return text;
   }
 
