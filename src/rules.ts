@@ -623,6 +623,9 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
     }
   }
 
+  /** The syllable's text after any pass-through features, with taamim removed */
+  const sylText = syl.text.replace(taamim, "");
+
   const hasMater = syl.clusters.map((c) => c.isMater).includes(true);
   if (hasMater) {
     const materSyl = materFeatures(syl, schema);
@@ -635,22 +638,22 @@ export const sylRules = (syl: Syllable, schema: Schema): string => {
 
   // syllable is 3ms sufx
   const mSSuffix = /\u{05B8}\u{05D9}\u{05D5}/u;
-  if (syl.isFinal && mSSuffix.test(baseSyllableText)) {
+  if (syl.isFinal && mSSuffix.test(sylText)) {
     const text = joined.replace(schema["QAMATS"] + schema["YOD"] + schema["VAV"], schema.MS_SUFX);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.SEGOL_HE && /\u{05B6}\u{05D4}/u.test(baseSyllableText)) {
+  if (schema.SEGOL_HE && /\u{05B6}\u{05D4}/u.test(sylText)) {
     const text = joined.replace(schema["SEGOL"] + schema["HE"], schema.SEGOL_HE);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.TSERE_HE && /\u{05B5}\u{05D4}/u.test(baseSyllableText)) {
+  if (schema.TSERE_HE && /\u{05B5}\u{05D4}/u.test(sylText)) {
     const text = joined.replace(schema["TSERE"] + schema["HE"], schema.TSERE_HE);
     return addStressMarker(text, syl, schema);
   }
 
-  if (schema.PATAH_HE && /\u{05B7}\u{05D4}/u.test(baseSyllableText)) {
+  if (schema.PATAH_HE && /\u{05B7}\u{05D4}/u.test(sylText)) {
     const text = joined.replace(schema["PATAH"] + schema["HE"], schema.PATAH_HE);
     return addStressMarker(text, syl, schema);
   }

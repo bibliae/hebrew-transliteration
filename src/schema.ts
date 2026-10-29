@@ -116,6 +116,11 @@ export interface PassThrough {
    *
    * @remarks
    * This is generally most useful when the callback does not transliterate the entire `FEATURE`
+   *
+   * When several features match, each pass-through callback receives the result of the previous one.
+   * Cluster and word features are also matched against that result.
+   * Syllable features are always matched against the syllable's original text,
+   * so a later feature can still match Hebrew that an earlier one has already transliterated.
    */
   PASS_THROUGH?: boolean;
 }

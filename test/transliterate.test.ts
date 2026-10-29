@@ -724,3 +724,45 @@ describe("ticket 013: word features chain and keep the word's context", () => {
     ).toBe("gābār");
   });
 });
+
+// tickets/016-syllable-features-use-original-text.md
+describe("ticket 016: rules after syllable features see the features' output", () => {
+  const segolToTsere: Schema["ADDITIONAL_FEATURES"] = [
+    {
+      FEATURE: "syllable",
+      HEBREW: "\u{05B6}",
+      TRANSLITERATION: (syllable) => syllable.text.replace("\u{05B6}", "\u{05B5}")
+    }
+  ];
+
+  test("the tsere he rule applies to a tsere produced by a feature", () => {
+    expect(
+      transliterate("שָׂדֶה", { SEGOL_HE: "SEGOLHE", TSERE_HE: "TSEREHE", ADDITIONAL_FEATURES: segolToTsere })
+    ).toBe("śādTSEREHE");
+    expect(transliterate("שָׂדֶה", { SEGOL_HE: "SEGOLHE", TSERE_HE: "TSEREHE" })).toBe("śādSEGOLHE");
+  });
+
+  test("syllable features are matched against the original syllable, but receive the updated one", () => {
+    // documented in PASS_THROUGH: the Tiberian schema relies on matching the original Hebrew
+    let received = "";
+    const result = transliterate("דָּבָר", {
+      ADDITIONAL_FEATURES: [
+        { FEATURE: "syllable", HEBREW: "ד", TRANSLITERATION: (syllable) => syllable.text.replace("ד", "ב") },
+        {
+          FEATURE: "syllable",
+          HEBREW: "\u{05B8}",
+          TRANSLITERATION: (syllable) => {
+            if (!received) {
+              received = syllable.text;
+            }
+            return syllable.text;
+          }
+        },
+        { FEATURE: "syllable", HEBREW: "ב", TRANSLITERATION: "X" }
+      ]
+    });
+    // bet + dagesh + qamats: the first feature turned the dalet into a bet
+    expect(received).toBe("\u{05D1}\u{05BC}\u{05B8}");
+    expect(result).toBe("bāXār");
+  });
+});
