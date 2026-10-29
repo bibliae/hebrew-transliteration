@@ -295,7 +295,7 @@ export class SBL extends Schema {
   declare holemHaser: Schema["holemHaser"];
   /** @category Syllabification @default undefined */
   declare ketivQeres: Schema["ketivQeres"];
-  constructor(schema: Partial<Schema>) {
+  constructor(schema: Partial<Schema> = {}) {
     super({
       VOCAL_SHEVA: schema.VOCAL_SHEVA ?? "ə",
       HATAF_SEGOL: schema.HATAF_SEGOL ?? "ĕ",

@@ -2,7 +2,7 @@ import type { Cluster } from "havarotjs/cluster";
 import type { Syllable } from "havarotjs/syllable";
 import { describe, expect, test } from "vitest";
 import type { Schema } from "../src/index";
-import { transliterate } from "../src/index";
+import { SBL, transliterate } from "../src/index";
 import { brillAcademic, michiganClaremont, sblAcademicSpirantization, sblSimple } from "../src/schemas/index";
 
 interface Inputs {
@@ -847,5 +847,22 @@ describe("ticket 019: syllable separator when the output already contains the se
   `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
     const { hebrew, transliteration, options } = inputs;
     expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});
+
+// tickets/021-sbl-docs-example-crashes.md
+describe("ticket 021: new SBL() without arguments", () => {
+  test("does not throw and has the default features", () => {
+    expect(() => new SBL()).not.toThrow();
+    expect(new SBL().ADDITIONAL_FEATURES?.map((feature) => feature.TITLE)).toEqual([
+      "Defective Long Vowels",
+      "Euphonic Dagesh"
+    ]);
+  });
+
+  test("the documented example keeps the default features", () => {
+    const oldFeatures = new SBL().ADDITIONAL_FEATURES ?? [];
+    const newFeature = { FEATURE: "word", HEBREW: "הָאָרֶץ", TRANSLITERATION: "The Earth" } as const;
+    expect(transliterate("קֻ֣ם הָאָרֶץ", { ADDITIONAL_FEATURES: [...oldFeatures, newFeature] })).toBe("qūm The Earth");
   });
 });
