@@ -587,3 +587,22 @@ describe("ticket 006: every syllable of a prefix before the Divine Name is kept"
     expect(transliterate(hebrew, options)).toBe(transliteration);
   });
 });
+
+// tickets/008-holam-haser-furtive-patah-ignored.md
+describe("ticket 008: HOLAM_HASER and FURTIVE_PATAH are used", () => {
+  test.each`
+    description                                 | hebrew         | transliteration | options
+    ${"holam haser, preserved"}                 | ${"עָוֺן֙"}    | ${"ʿāwXn"}      | ${{ HOLAM_HASER: "X", holemHaser: "preserve" }}
+    ${"holam haser, removed (becomes a holam)"} | ${"עָוֺן֙"}    | ${"ʿāwōn"}      | ${{ HOLAM_HASER: "X", holemHaser: "remove" }}
+    ${"holam haser takes a stress mark"}        | ${"עָוֺ֙ן"}    | ${"ʿāwX'n"}     | ${{ HOLAM_HASER: "X", holemHaser: "preserve", STRESS_MARKER: { location: "after-vowel", mark: "'" } }}
+    ${"furtive patah, het"}                     | ${"נֹ֖חַ"}     | ${"nōXḥ"}       | ${{ FURTIVE_PATAH: "X" }}
+    ${"furtive patah, ayin (with a mater)"}     | ${"רָקִ֖יעַ"}  | ${"rāqîXʿ"}     | ${{ FURTIVE_PATAH: "X" }}
+    ${"furtive patah, he"}                      | ${"גָּבֹ֗הַּ"} | ${"gābōXh"}     | ${{ FURTIVE_PATAH: "X" }}
+    ${"furtive patah, with a sof pasuq"}        | ${"רֽוּחַ׃"}   | ${"rûXḥ"}       | ${{ FURTIVE_PATAH: "X" }}
+    ${"furtive patah value is used literally"}  | ${"נֹ֖חַ"}     | ${"nō$&ḥ"}      | ${{ FURTIVE_PATAH: "$&" }}
+    ${"default furtive patah is unchanged"}     | ${"נֹ֖חַ"}     | ${"nōaḥ"}       | ${{}}
+  `("$description: $hebrew → $transliteration", (inputs: Inputs) => {
+    const { hebrew, transliteration, options } = inputs;
+    expect(transliterate(hebrew, options)).toBe(transliteration);
+  });
+});

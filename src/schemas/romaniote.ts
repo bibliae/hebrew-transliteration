@@ -55,7 +55,7 @@ export const romaniote: Schema = {
   SEGOL_YOD: "ε",
   HIRIQ_YOD: "ι",
   TSERE_YOD: "ε",
-  FURTIVE_PATAH: "a",
+  FURTIVE_PATAH: "α",
   QAMATS_QATAN: "ο",
   HOLAM_VAV: "ω",
   SHUREQ: "ου",

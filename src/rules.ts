@@ -78,6 +78,7 @@ const addStressMarker = (text: string, syl: Syllable, schema: Schema) => {
     schema.TSERE,
     schema.HIRIQ,
     schema.HOLAM,
+    schema.HOLAM_HASER,
     schema.QAMATS_QATAN,
     schema.QUBUTS,
     schema.QAMATS_HE,
@@ -302,7 +303,7 @@ const mapChars = (schema: Schema) => (input: string) => {
     "\u{05B7}": "PATAH", // HEBREW POINT PATAH (U+05B7)
     "\u{05B8}": "QAMATS", // HEBREW POINT QAMATS (U+05B8)
     "\u{05B9}": "HOLAM", // HEBREW POINT HOLAM (U+05B9)
-    "\u{05BA}": "HOLAM", // HEBREW POINT HOLAM HASER FOR VAV (U+05BA)
+    "\u{05BA}": "HOLAM_HASER", // HEBREW POINT HOLAM HASER FOR VAV (U+05BA)
     "\u{05BB}": "QUBUTS", // HEBREW POINT QUBUTS (U+05BB)
     "\u{05BC}": "DAGESH", // HEBREW POINT DAGESH OR MAPIQ (U+05BC)
     //  "\u{05BD}": "", // HEBREW POINT METEG (U+05BD)
@@ -463,19 +464,23 @@ const cluterRules = (cluster: Cluster, schema: Schema) => {
   }
 
   if (syl?.isFinal && !syl?.isClosed) {
+    // a furtive patah is pronounced before its consonant,
+    // so output the FURTIVE_PATAH value first and let the consonant be mapped as usual
+    const furtivePatah = schema.FURTIVE_PATAH;
+
     const furtiveChet = /\u{05D7}\u{05B7}$/mu;
     if (furtiveChet.test(clusterText)) {
-      return replaceWithRegex(clusterText, furtiveChet, "\u{05B7}\u{05D7}");
+      return clusterText.replace(furtiveChet, () => furtivePatah + "\u{05D7}");
     }
 
     const furtiveAyin = /\u{05E2}\u{05B7}$/mu;
     if (furtiveAyin.test(clusterText)) {
-      return replaceWithRegex(clusterText, furtiveAyin, "\u{05B7}\u{05E2}");
+      return clusterText.replace(furtiveAyin, () => furtivePatah + "\u{05E2}");
     }
 
     const furtiveHe = /\u{05D4}\u{05BC}\u{05B7}$/mu;
     if (furtiveHe.test(clusterText)) {
-      return replaceWithRegex(clusterText, furtiveHe, "\u{05B7}\u{05D4}\u{05BC}");
+      return clusterText.replace(furtiveHe, () => furtivePatah + "\u{05D4}\u{05BC}");
     }
   }
 
